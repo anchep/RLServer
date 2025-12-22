@@ -1,4 +1,4 @@
-# Rust+PostgreSQL用户验证和充值服务
+# Rust+PostgreSQL用户验证和充值服务 
 
 一款基于Rust和PostgreSQL开发的Linux服务器服务程序，用于软件用户的验证和充值工作。
 

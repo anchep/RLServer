@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: rust_server
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  
+  app:
+    build: .
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://admin:password@db:5432/rust_server
+      JWT_SECRET: your-secret-key-here
+      HEARTBEAT_INTERVAL: 600
+      CLEANUP_INTERVAL: 300
+      SERVER_PORT: 28001
+    ports:
+      - "28001:28001"
+
+volumes:
+  postgres_data:

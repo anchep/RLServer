@@ -1,0 +1,117 @@
+use actix_web::{web, Responder, HttpResponse, HttpRequest};
+use serde::{Deserialize, Serialize};
+use crate::database::models::*;
+use crate::services::auth::*;
+use crate::database::Pool;
+use crate::config::Config;
+
+#[derive(Debug, Serialize)]
+struct RegisterResponse {
+    message: String,
+    user: User,
+}
+
+#[derive(Debug, Serialize)]
+struct LoginResponse {
+    message: String,
+    user: User,
+    token: String,
+}
+
+// 用户注册
+pub async fn register_handler(
+    pool: web::Data<Pool>,
+    config: web::Data<Config>,
+    req: web::Json<RegisterRequest>,
+) -> impl Responder {
+    match register_user(&pool, req.into_inner(), &config).await {
+        Ok(user) => {
+            HttpResponse::Ok().json(RegisterResponse {
+                message: "Registration successful. Please check your email for verification code.".to_string(),
+                user,
+            })
+        }
+        Err(err) => {
+            HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }))
+        }
+    }
+}
+
+// 用户登录
+pub async fn login_handler(
+    pool: web::Data<Pool>,
+    config: web::Data<Config>,
+    req: web::Json<LoginRequest>,
+    req_addr: actix_web:: HttpRequest,
+) -> impl Responder {
+    // 获取客户端IP
+    let conn_info = req_addr.connection_info();
+    let ip = conn_info.realip_remote_addr().unwrap_or("0.0.0.0");
+    
+    match login_user(&pool, req.into_inner(), ip, &config).await {
+        Ok((user, token)) => {
+            HttpResponse::Ok().json(LoginResponse {
+                message: "Login successful".to_string(),
+                user,
+                token,
+            })
+        }
+        Err(err) => {
+            HttpResponse::Unauthorized().json(serde_json::json!({ "error": err.to_string() }))
+        }
+    }
+}
+
+// 用户登出
+pub async fn logout_handler(
+    pool: web::Data<Pool>,
+    req: HttpRequest,
+) -> impl Responder {
+    // 从请求头获取token
+    let auth_header = req.headers().get(actix_web::http::header::AUTHORIZATION);
+    
+    if let Some(auth_value) = auth_header {
+        if let Ok(auth_str) = auth_value.to_str() {
+            if auth_str.starts_with("Bearer ") {
+                let session_token = auth_str.trim_start_matches("Bearer ");
+                
+                match logout_user(&pool, session_token).await {
+                    Ok(_) => {
+                        return HttpResponse::Ok().json(serde_json::json!({ "message": "Logout successful" }));
+                    }
+                    Err(err) => {
+                        return HttpResponse::InternalServerError().json(serde_json::json!({ "error": err.to_string() }));
+                    }
+                }
+            }
+        }
+    }
+    
+    HttpResponse::BadRequest().json(serde_json::json!({ "error": "Invalid token" }))
+}
+
+// 刷新令牌请求DTO
+#[derive(Debug, Deserialize)]
+pub struct RefreshTokenRequest {
+    refresh_token: String,
+}
+
+// 刷新访问令牌
+pub async fn refresh_token_handler(
+    pool: web::Data<Pool>,
+    config: web::Data<Config>,
+    req: web::Json<RefreshTokenRequest>,
+) -> impl Responder {
+    match refresh_access_token(&pool, &req.refresh_token, &config).await {
+        Ok((user, token)) => {
+            HttpResponse::Ok().json(LoginResponse {
+                message: "Token refreshed successfully".to_string(),
+                user,
+                token,
+            })
+        }
+        Err(err) => {
+            HttpResponse::Unauthorized().json(serde_json::json!({ "error": err.to_string() }))
+        }
+    }
+}

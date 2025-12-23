@@ -56,6 +56,13 @@ anyhow = "1.0.86"
 thiserror = "1.0.61"
 humantime = "2.1.0"
 
+# API速率限制
+actix-governor = "0.5.0"
+governor = { version = "0.5.1", features = ["std"] }
+
+# 输入验证
+validator = { version = "0.16.0", features = ["derive"] }
+
 # 时间处理
 time = "0.3.36"
 

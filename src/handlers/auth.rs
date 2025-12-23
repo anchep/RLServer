@@ -24,6 +24,11 @@ pub async fn register_handler(
     config: web::Data<Config>,
     req: web::Json<RegisterRequest>,
 ) -> impl Responder {
+    // 验证请求参数
+    if let Err(err) = req.validate() {
+        return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
+    }
+    
     match register_user(&pool, req.into_inner(), &config).await {
         Ok(user) => {
             HttpResponse::Ok().json(RegisterResponse {
@@ -44,6 +49,11 @@ pub async fn login_handler(
     req: web::Json<LoginRequest>,
     req_addr: actix_web:: HttpRequest,
 ) -> impl Responder {
+    // 验证请求参数
+    if let Err(err) = req.validate() {
+        return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
+    }
+    
     // 获取客户端IP
     let conn_info = req_addr.connection_info();
     let ip = conn_info.realip_remote_addr().unwrap_or("0.0.0.0");
@@ -122,6 +132,11 @@ pub async fn reset_password_handler(
     config: web::Data<Config>,
     req: web::Json<ResetPasswordRequest>,
 ) -> impl Responder {
+    // 验证请求参数
+    if let Err(err) = req.validate() {
+        return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
+    }
+    
     match request_password_reset(&pool, req.into_inner(), &config).await {
         Ok(_) => {
             HttpResponse::Ok().json(serde_json::json!({ "message": "Password reset email sent successfully" }))
@@ -138,6 +153,11 @@ pub async fn verify_reset_password_handler(
     config: web::Data<Config>,
     req: web::Json<VerifyResetPasswordRequest>,
 ) -> impl Responder {
+    // 验证请求参数
+    if let Err(err) = req.validate() {
+        return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
+    }
+    
     match verify_reset_password(&pool, req.into_inner(), &config).await {
         Ok(_) => {
             HttpResponse::Ok().json(serde_json::json!({ "message": "Password reset successful" }))

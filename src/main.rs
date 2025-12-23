@@ -1,4 +1,5 @@
 use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_governor::{Governor, GovernorConfigBuilder};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use dotenv::dotenv;
 use log::{error, info};
@@ -64,10 +65,20 @@ async fn main() -> std::io::Result<()> {
     // 启动HTTP服务器
     let server_port = config.server_port;
     info!("Starting server on port {}", server_port);
+    
+    // 配置API速率限制
+    let governor_config = GovernorConfigBuilder::default()
+        .per_second(2)
+        .burst_size(5)
+        .finish()
+        .unwrap();
+    
     HttpServer::new(move || {
         App::new()
             // 添加日志中间件，配置为使用X-Forwarded-For头
             .wrap(Logger::new("%a %r %s %b %{Referer}i %{User-Agent}i %T"))
+            // 添加API速率限制中间件
+            .wrap(Governor::new(governor_config.clone()))
             // 注册数据库连接池
             .app_data(web::Data::new(pool.clone()))
             // 注册配置

@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
 // 用户表
 #[derive(Queryable, Identifiable, Debug, Serialize, Deserialize, Insertable, AsChangeset)]
@@ -97,32 +98,48 @@ pub struct OnlineUser {
 }
 
 // 注册请求DTO
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct RegisterRequest {
+    #[validate(length(min = 3, max = 20, message = "Username must be between 3 and 20 characters"))]
     pub username: String,
+    
+    #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
     pub password: String,
+    
+    #[validate(email(message = "Invalid email format"))]
     pub email: String,
 }
 
 // 登录请求DTO
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct LoginRequest {
+    #[validate(length(min = 3, max = 20, message = "Username must be between 3 and 20 characters"))]
     pub username: String,
+    
+    #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
     pub password: String,
+    
+    #[validate(length(min = 1, max = 100, message = "Hardware code must be between 1 and 100 characters"))]
     pub hardware_code: String,
+    
+    #[validate(length(min = 1, max = 50, message = "Software version must be between 1 and 50 characters"))]
     pub software_version: String,
 }
 
 // 密码重置请求DTO
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct ResetPasswordRequest {
+    #[validate(email(message = "Invalid email format"))]
     pub email: String,
 }
 
 // 验证密码重置令牌并更新密码DTO
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct VerifyResetPasswordRequest {
+    #[validate(length(min = 1, message = "Token must not be empty"))]
     pub token: String,
+    
+    #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
     pub new_password: String,
 }
 

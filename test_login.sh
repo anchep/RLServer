@@ -4,7 +4,7 @@ echo "=== 测试登录功能，检查VIP信息是否更新 ==="
 
 # 测试登录功能
 echo "\n1. 测试登录功能"
-login_response=$(docker run --rm --network rustserver_default curlimages/curl -s -X POST -H "Content-Type: application/json" -d '{"username":"test_user2","password":"123456","hardware_code":"hw-test","software_version":"v1.0.0"}' http://app:28001/api/auth/login)
+login_response=$(docker run --rm --network rlserver_default curlimages/curl -s -X POST -H "Content-Type: application/json" -d '{"username":"test_user2","password":"123456","hardware_code":"hw-test","software_version":"v1.0.0"}' http://app:28001/api/auth/login)
 echo "登录响应: $login_response"
 
 # 检查VIP等级

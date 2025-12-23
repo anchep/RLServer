@@ -182,3 +182,48 @@ pub async fn refresh_access_token(pool: &Pool, refresh_token: &str, config: &Con
     
     Ok((user, new_access_token))
 }
+
+/// 处理密码重置请求
+pub async fn request_password_reset(pool: &Pool, req: ResetPasswordRequest, config: &Config) -> Result<()> {
+    let mut conn = pool.get()?;
+    
+    // 查找用户
+    let user = users::table
+        .filter(users::email.eq(&req.email))
+        .first::<User>(&mut conn)?;
+    
+    // 生成密码重置令牌
+    let reset_token = crate::utils::jwt::generate_reset_token(user.id, &user.email, config)?;
+    
+    // 发送密码重置邮件
+    crate::services::email::send_password_reset_email(pool, &user, &reset_token, config).await?;
+    
+    Ok(())
+}
+
+/// 验证密码重置令牌并更新密码
+pub async fn verify_reset_password(pool: &Pool, req: VerifyResetPasswordRequest, config: &Config) -> Result<()> {
+    let mut conn = pool.get()?;
+    
+    // 验证重置令牌
+    let claims = crate::utils::jwt::verify_reset_token(&req.token, config)?;
+    let user_id = claims.sub.parse::<i32>()?;
+    
+    // 查找用户
+    let user = users::table
+        .find(user_id)
+        .first::<User>(&mut conn)?;
+    
+    // 加密新密码
+    let password_hash = hash_password(&req.new_password)?;
+    
+    // 更新用户密码
+    diesel::update(users::table.find(user.id))
+        .set((
+            users::password_hash.eq(&password_hash),
+            users::updated_at.eq(Utc::now()),
+        ))
+        .execute(&mut conn)?;
+    
+    Ok(())
+}

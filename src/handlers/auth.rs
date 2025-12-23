@@ -115,3 +115,35 @@ pub async fn refresh_token_handler(
         }
     }
 }
+
+// 密码重置请求
+pub async fn reset_password_handler(
+    pool: web::Data<Pool>,
+    config: web::Data<Config>,
+    req: web::Json<ResetPasswordRequest>,
+) -> impl Responder {
+    match request_password_reset(&pool, req.into_inner(), &config).await {
+        Ok(_) => {
+            HttpResponse::Ok().json(serde_json::json!({ "message": "Password reset email sent successfully" }))
+        }
+        Err(err) => {
+            HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }))
+        }
+    }
+}
+
+// 验证密码重置令牌并更新密码
+pub async fn verify_reset_password_handler(
+    pool: web::Data<Pool>,
+    config: web::Data<Config>,
+    req: web::Json<VerifyResetPasswordRequest>,
+) -> impl Responder {
+    match verify_reset_password(&pool, req.into_inner(), &config).await {
+        Ok(_) => {
+            HttpResponse::Ok().json(serde_json::json!({ "message": "Password reset successful" }))
+        }
+        Err(err) => {
+            HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }))
+        }
+    }
+}

@@ -3,7 +3,7 @@
 ## 项目结构
 
 ```
-RustServer/
+RLServer/
 ├── src/
 │   ├── main.rs              # 主程序入口
 │   ├── config.rs            # 配置管理
@@ -412,7 +412,7 @@ volumes:
 ### 环境变量示例 (.env.example)
 
 ```
-DATABASE_URL=postgres://admin:password@localhost:5432/rust_server
+DATABASE_URL=postgres://admin:password@localhost:5432/rl_server
 JWT_SECRET=your-secret-key-here
 HEARTBEAT_INTERVAL=600  # 10分钟，单位秒
 CLEANUP_INTERVAL=300    # 5分钟，单位秒

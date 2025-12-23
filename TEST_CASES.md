@@ -301,7 +301,7 @@
 ## .env文件配置示例
 ```
 # 数据库连接配置
-DATABASE_URL=postgres://admin:password@localhost:5432/rust_server
+DATABASE_URL=postgres://admin:password@localhost:5432/rl_server
 
 # JWT配置
 JWT_SECRET=your-secret-key-here

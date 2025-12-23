@@ -40,7 +40,7 @@
 ## 项目结构
 
 ```
-RustServer/
+RLServer/
 ├── src/
 │   ├── main.rs              # 主程序入口
 │   ├── database/            # 数据库相关代码
@@ -252,7 +252,7 @@ docker-compose up -d
 日志默认输出到控制台，格式如下：
 
 ```
-[2025-12-22T22:00:00Z] [rust_server] [INFO] Starting server on port 28001
+[2025-12-22T22:00:00Z] [rlserver] [INFO] Starting server on port 28001
 ```
 
 ## 监控与维护

@@ -71,3 +71,20 @@ pub async fn verify_email_code(pool: &Pool, user_id: i32, code: &str) -> Result<
     
     Ok(())
 }
+
+/// 发送密码重置邮件
+pub async fn send_password_reset_email(pool: &Pool, user: &User, reset_token: &str, config: &Config) -> Result<()> {
+    let mut conn = pool.get()?;
+    
+    // 构建邮件内容
+    let subject = "Password Reset Request";
+    let reset_link = format!("http://localhost:28001/api/auth/reset-password?token={}", reset_token);
+    let body = format!("Hello {},\n\nYou requested a password reset for your account. Please click the following link to reset your password:\n\n{}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nRLServer Team", user.username, reset_link);
+    
+    // 模拟发送邮件
+    info!("Password reset email sent to {}: {}", user.email, reset_link);
+    info!("Email content: Subject: {}, Body: {}", subject, body);
+    info!("SMTP Config: Host: {}, Port: {}, From: {}", config.smtp_host, config.smtp_port, config.smtp_from_email);
+    
+    Ok(())
+}

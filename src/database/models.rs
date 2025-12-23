@@ -113,6 +113,19 @@ pub struct LoginRequest {
     pub software_version: String,
 }
 
+// 密码重置请求DTO
+#[derive(Debug, Deserialize)]
+pub struct ResetPasswordRequest {
+    pub email: String,
+}
+
+// 验证密码重置令牌并更新密码DTO
+#[derive(Debug, Deserialize)]
+pub struct VerifyResetPasswordRequest {
+    pub token: String,
+    pub new_password: String,
+}
+
 // 充值请求DTO
 #[derive(Debug, Deserialize)]
 pub struct RechargeRequest {

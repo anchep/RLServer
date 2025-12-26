@@ -10,13 +10,11 @@ use crate::errors::AppError;
 #[derive(Debug, Serialize)]
 struct RegisterResponse {
     message: String,
-    user: User,
 }
 
 #[derive(Debug, Serialize)]
 struct LoginResponse {
     message: String,
-    user: User,
     token: String,
 }
 
@@ -32,10 +30,9 @@ pub async fn register_handler(
     }
     
     match register_user(&pool, req.into_inner(), &config).await {
-        Ok(user) => {
+        Ok(_) => {
             HttpResponse::Ok().json(RegisterResponse {
                 message: "Registration successful. Please check your email for verification code.".to_string(),
-                user,
             })
         }
         Err(err) => {
@@ -61,10 +58,9 @@ pub async fn login_handler(
     let ip = conn_info.realip_remote_addr().unwrap_or("0.0.0.0");
     
     match login_user(&pool, req.into_inner(), ip, &config).await {
-        Ok((user, token)) => {
+        Ok((_, token)) => {
             HttpResponse::Ok().json(LoginResponse {
                 message: "Login successful".to_string(),
-                user,
                 token,
             })
         }
@@ -87,7 +83,7 @@ pub async fn logout_handler(
     // 从请求体获取token
     let session_token = &logout_req.session_token;
     
-    match logout_user(&pool, session_token, &logout_req.hardware_code, &logout_req.software_version).await {
+    match logout_user(&pool, session_token).await {
         Ok(_) => {
             return HttpResponse::Ok().json(serde_json::json!({ "message": "Logout successful" }));
         }
@@ -113,10 +109,9 @@ pub async fn refresh_token_handler(
     req: web::Json<RefreshTokenRequest>,
 ) -> impl Responder {
     match refresh_access_token(&pool, &req.refresh_token, &config).await {
-        Ok((user, token)) => {
+        Ok((_, token)) => {
             HttpResponse::Ok().json(LoginResponse {
                 message: "Token refreshed successfully".to_string(),
-                user,
                 token,
             })
         }

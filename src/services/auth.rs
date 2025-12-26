@@ -121,20 +121,33 @@ pub async fn login_user(pool: &Pool, req: LoginRequest, ip: &str, config: &Confi
     Ok((updated_user, access_token))
 }
 
-pub async fn logout_user(pool: &Pool, session_token: &str, hardware_code: &str, software_version: &str) -> Result<()> {
+pub async fn logout_user(pool: &Pool, session_token: &str) -> Result<()> {
     let mut conn = pool.get()?;
     
-    // 删除在线会话（同时验证硬件码和软件版本）
-    let deleted_rows = diesel::delete(online_users::table)
+    // 首先获取在线用户信息，以便获取用户ID
+    let online_user = online_users::table
         .filter(online_users::session_token.eq(session_token))
-        .filter(online_users::hardware_code.eq(hardware_code))
-        .filter(online_users::software_version.eq(software_version))
-        .execute(&mut conn)?;
+        .first::<OnlineUser>(&mut conn)
+        .optional()?;
     
-    // 检查是否有记录被删除，如果没有，说明token不存在
-    if deleted_rows == 0 {
+    if online_user.is_none() {
         return Err(AppError::Unauthorized("Logout token error".to_string()));
     }
+    
+    let online_user = online_user.unwrap();
+    
+    // 删除在线会话
+    diesel::delete(online_users::table)
+        .filter(online_users::id.eq(online_user.id))
+        .execute(&mut conn)?;
+    
+    // 更新用户的最后退出时间
+    diesel::update(users::table.find(online_user.user_id))
+        .set((
+            users::last_logout_at.eq(Utc::now()),
+            users::updated_at.eq(Utc::now()),
+        ))
+        .execute(&mut conn)?;
     
     Ok(())
 }

@@ -19,6 +19,7 @@ pub struct User {
     pub last_login_hardware: Option<String>,
     pub last_login_version: Option<String>,
     pub last_login_ip: Option<String>,
+    pub last_logout_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -162,12 +163,6 @@ pub struct HeartbeatRequest {
 pub struct LogoutRequest {
     #[validate(length(min = 1, message = "Session token must not be empty"))]
     pub session_token: String,
-    
-    #[validate(length(min = 1, max = 100, message = "Hardware code must be between 1 and 100 characters"))]
-    pub hardware_code: String,
-    
-    #[validate(length(min = 1, max = 50, message = "Software version must be between 1 and 50 characters"))]
-    pub software_version: String,
 }
 
 // JWT Claims

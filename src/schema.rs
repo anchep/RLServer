@@ -80,6 +80,7 @@ table! {
         last_login_hardware -> Nullable<Varchar>,
         last_login_version -> Nullable<Varchar>,
         last_login_ip -> Nullable<Varchar>,
+        last_logout_at -> Nullable<Timestamptz>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

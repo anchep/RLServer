@@ -97,8 +97,6 @@ Write-Host "
 5. Send logout request with valid token"
 $logoutBody = @{
     session_token = $token
-    hardware_code = "test_hw"
-    software_version = "1.0.0"
 }
 
 try {
@@ -114,8 +112,6 @@ Write-Host "
 6. Send logout request with invalid token"
 $invalidLogoutBody = @{
     session_token = "invalid_token_$random"
-    hardware_code = "test_hw"
-    software_version = "1.0.0"
 }
 
 try {

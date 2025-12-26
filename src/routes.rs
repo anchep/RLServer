@@ -14,6 +14,9 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
             .service(web::resource("/auth/reset-password").route(web::post().to(auth::reset_password_handler)))
             .service(web::resource("/auth/reset-password/verify").route(web::post().to(auth::verify_reset_password_handler)))
             
+            // 退出登录路由 - 无需认证，因为目的是使token失效
+            .service(web::resource("/auth/logout").route(web::post().to(auth::logout_handler)))
+            
             // 心跳路由
             .service(web::resource("/heartbeat").route(web::post().to(heartbeat::heartbeat_handler)))
             
@@ -38,8 +41,5 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
                     .service(web::resource("/software").route(web::get().to(software::get_all_software_handler)))
                     .service(web::resource("/software/{software_id}/access").route(web::get().to(software::check_software_access_handler)))
             )
-            
-            // 退出登录路由 - 无需认证，因为目的是使token失效
-            .service(web::resource("/auth/logout").route(web::post().to(auth::logout_handler)))
     );
 }

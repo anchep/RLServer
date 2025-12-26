@@ -16,6 +16,9 @@ services:
   
   app:
     image: rlserver-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: always
     depends_on:
       - db

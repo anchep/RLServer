@@ -160,6 +160,9 @@ pub struct HeartbeatRequest {
 // 退出登录请求DTO
 #[derive(Debug, Deserialize, Validate)]
 pub struct LogoutRequest {
+    #[validate(length(min = 1, message = "Session token must not be empty"))]
+    pub session_token: String,
+    
     #[validate(length(min = 1, max = 100, message = "Hardware code must be between 1 and 100 characters"))]
     pub hardware_code: String,
     

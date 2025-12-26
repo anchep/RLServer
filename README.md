@@ -131,7 +131,7 @@ cargo build --release
 - **方法**: `GET`
 
 #### 用户登出
-- **URL**: `/api/protected/users/logout`
+- **URL**: `/api/auth/logout`
 - **方法**: `POST`
 
 #### 卡密充值

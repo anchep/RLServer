@@ -96,12 +96,13 @@ try {
 Write-Host "
 5. Send logout request with valid token"
 $logoutBody = @{
+    session_token = $token
     hardware_code = "test_hw"
     software_version = "1.0.0"
 }
 
 try {
-    $response = Invoke-RestMethod -Uri "$baseUrl/auth/logout" -Method Post -Body ($logoutBody | ConvertTo-Json) -ContentType "application/json" -Headers $headers
+    $response = Invoke-RestMethod -Uri "$baseUrl/auth/logout" -Method Post -Body ($logoutBody | ConvertTo-Json) -ContentType "application/json"
     Write-Host "✓ Logout successful: $($response.message)" -ForegroundColor Green
 } catch {
     Write-Host "✗ Logout failed: $($_.Exception.Response.StatusCode.value__) - $($_.Exception.Response.StatusDescription)" -ForegroundColor Red
@@ -111,10 +112,14 @@ try {
 # 6. Send logout request with invalid token
 Write-Host "
 6. Send logout request with invalid token"
-$invalidHeaders = @{Authorization = "Bearer invalid_token_$random"}
+$invalidLogoutBody = @{
+    session_token = "invalid_token_$random"
+    hardware_code = "test_hw"
+    software_version = "1.0.0"
+}
 
 try {
-    $response = Invoke-RestMethod -Uri "$baseUrl/auth/logout" -Method Post -Body ($logoutBody | ConvertTo-Json) -ContentType "application/json" -Headers $invalidHeaders
+    $response = Invoke-RestMethod -Uri "$baseUrl/auth/logout" -Method Post -Body ($invalidLogoutBody | ConvertTo-Json) -ContentType "application/json"
     Write-Host "✗ Expected failure, but request succeeded: $($response.message)" -ForegroundColor Yellow
     Write-Host "  Error: Invalid token should return error, but returned success message" -ForegroundColor Red
 } catch {

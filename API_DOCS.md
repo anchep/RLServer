@@ -19,22 +19,7 @@
 **响应**: 
 ```json
 {
-  "message": "Registration successful. Please check your email for verification code.",
-  "user": {
-    "id": 1,
-    "username": "string",
-    "password_hash": "string",
-    "email": "string",
-    "email_verified": false,
-    "vip_level": 0,
-    "vip_expires_at": null,
-    "last_login_at": null,
-    "last_login_hardware": null,
-    "last_login_version": null,
-    "last_login_ip": null,
-    "created_at": "2025-12-23T14:30:11Z",
-    "updated_at": "2025-12-23T14:30:11Z"
-  }
+  "message": "Registration successful. Please check your email for verification code."
 }
 ```
 
@@ -57,21 +42,6 @@
 ```json
 {
   "message": "Login successful",
-  "user": {
-    "id": 1,
-    "username": "string",
-    "password_hash": "string",
-    "email": "string",
-    "email_verified": false,
-    "vip_level": 0,
-    "vip_expires_at": null,
-    "last_login_at": "2025-12-23T14:47:52Z",
-    "last_login_hardware": "string",
-    "last_login_version": "string",
-    "last_login_ip": "string",
-    "created_at": "2025-12-23T14:30:11Z",
-    "updated_at": "2025-12-23T14:47:52Z"
-  },
   "token": "string"
 }
 ```
@@ -92,21 +62,6 @@
 ```json
 {
   "message": "Token refreshed successfully",
-  "user": {
-    "id": 1,
-    "username": "string",
-    "password_hash": "string",
-    "email": "string",
-    "email_verified": false,
-    "vip_level": 0,
-    "vip_expires_at": null,
-    "last_login_at": "2025-12-23T14:47:52Z",
-    "last_login_hardware": "string",
-    "last_login_version": "string",
-    "last_login_ip": "string",
-    "created_at": "2025-12-23T14:30:11Z",
-    "updated_at": "2025-12-23T14:47:52Z"
-  },
   "token": "string"
 }
 ```
@@ -170,6 +125,7 @@
   "last_login_hardware": "string",
   "last_login_version": "string",
   "last_login_ip": "string",
+  "last_logout_at": null,
   "created_at": "2025-12-23T14:30:11Z",
   "updated_at": "2025-12-23T14:47:52Z"
 }
@@ -197,12 +153,11 @@
 
 **请求方式**: POST
 **请求地址**: `/api/auth/logout`
-**认证要求**: 无需认证 (Bearer Token 在请求头中传递)
+**认证要求**: 无需认证 (token 在请求体中传递)
 **请求体**: 
 ```json
 {
-  "hardware_code": "string",
-  "software_version": "string"
+  "session_token": "string"
 }
 ```
 
@@ -456,4 +411,4 @@ API版本信息通过URL路径进行控制，当前版本为v1（默认）。未
 
 如有任何API相关问题或建议，请联系技术支持：
 - 邮箱：support@rlserver.com
-- 文档更新时间：2025-12-23
+- 文档更新时间：2025-12-27

@@ -79,7 +79,7 @@ $logoutBody = @{
 }
 
 try {
-    $logoutResponse = Invoke-RestMethod -Uri "$baseUrl/protected/users/logout" -Method Post -Body ($logoutBody | ConvertTo-Json) -ContentType "application/json" -Headers $headers
+    $logoutResponse = Invoke-RestMethod -Uri "$baseUrl/auth/logout" -Method Post -Body ($logoutBody | ConvertTo-Json) -ContentType "application/json" -Headers $headers
     Write-Host "退出登录响应: $($logoutResponse | ConvertTo-Json -Depth 10)" -ForegroundColor Green
 } catch {
     Write-Host "退出登录失败: $($_.Exception.Response.StatusCode.value__) - $($_.Exception.Response.StatusDescription)" -ForegroundColor Red

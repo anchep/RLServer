@@ -73,12 +73,14 @@ async fn main() -> std::io::Result<()> {
         .finish()
         .unwrap();
     
+    let governor_config = web::Data::new(governor_config);
+    
     HttpServer::new(move || {
         App::new()
             // 添加日志中间件，配置为使用X-Forwarded-For头
             .wrap(Logger::new("%a %r %s %b %{Referer}i %{User-Agent}i %T"))
             // 添加API速率限制中间件
-            .wrap(Governor::new(governor_config.clone()))
+            .wrap(Governor::new(&governor_config))
             // 注册数据库连接池
             .app_data(web::Data::new(pool.clone()))
             // 注册配置
@@ -86,8 +88,6 @@ async fn main() -> std::io::Result<()> {
             // 配置路由
             .configure(configure_routes)
     })
-    // 配置信任的代理，用于获取真实客户端IP
-    .forwarded_header(actix_web::forwarded::ForwardedHeader::XForwardedFor)
     .bind(format!("0.0.0.0:{}", server_port))?
     .run()
     .await

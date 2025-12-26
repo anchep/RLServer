@@ -111,3 +111,9 @@ impl From<std::num::ParseIntError> for AppError {
         AppError::BadRequest(err.to_string())
     }
 }
+
+impl From<regex::Error> for AppError {
+    fn from(err: regex::Error) -> Self {
+        AppError::BadRequest(err.to_string())
+    }
+}

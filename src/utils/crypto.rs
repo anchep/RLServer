@@ -30,7 +30,7 @@ pub fn check_password_strength(password: &str) -> Result<()> {
     }
     
     // 包含至少一个特殊字符
-    let has_special = Regex::new(r"[!@#$%^&*(),.?\":{}|<>]")?;
+    let has_special = Regex::new(r#"[!@#$%^&*(),.?":{}|<>]"#)?;
     if !has_special.is_match(password) {
         return Err(AppError::BadRequest("Password must contain at least one special character".to_string()));
     }

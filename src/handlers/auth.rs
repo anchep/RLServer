@@ -1,9 +1,11 @@
 use actix_web::{web, Responder, HttpResponse, HttpRequest};
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 use crate::database::models::*;
 use crate::services::auth::*;
 use crate::database::Pool;
 use crate::config::Config;
+use crate::errors::AppError;
 
 #[derive(Debug, Serialize)]
 struct RegisterResponse {
@@ -75,7 +77,6 @@ pub async fn login_handler(
 // 用户登出
 pub async fn logout_handler(
     pool: web::Data<Pool>,
-    req: HttpRequest,
     logout_req: web::Json<LogoutRequest>,
 ) -> impl Responder {
     // 验证请求参数
@@ -83,30 +84,20 @@ pub async fn logout_handler(
         return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
     }
     
-    // 从请求头获取token
-    let auth_header = req.headers().get(actix_web::http::header::AUTHORIZATION);
+    // 从请求体获取token
+    let session_token = &logout_req.session_token;
     
-    if let Some(auth_value) = auth_header {
-        if let Ok(auth_str) = auth_value.to_str() {
-            if auth_str.starts_with("Bearer ") {
-                let session_token = auth_str.trim_start_matches("Bearer ");
-                
-                match logout_user(&pool, session_token, &logout_req.hardware_code, &logout_req.software_version).await {
-                    Ok(_) => {
-                        return HttpResponse::Ok().json(serde_json::json!({ "message": "Logout successful" }));
-                    }
-                    Err(AppError::Unauthorized(msg)) => {
-                        return HttpResponse::Unauthorized().json(serde_json::json!({ "error": msg }));
-                    }
-                    Err(err) => {
-                        return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
-                    }
-                }
-            }
+    match logout_user(&pool, session_token, &logout_req.hardware_code, &logout_req.software_version).await {
+        Ok(_) => {
+            return HttpResponse::Ok().json(serde_json::json!({ "message": "Logout successful" }));
+        }
+        Err(AppError::Unauthorized(msg)) => {
+            return HttpResponse::Unauthorized().json(serde_json::json!({ "error": msg }));
+        }
+        Err(err) => {
+            return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
         }
     }
-    
-    HttpResponse::BadRequest().json(serde_json::json!({ "error": "Invalid token" }))
 }
 
 // 刷新令牌请求DTO

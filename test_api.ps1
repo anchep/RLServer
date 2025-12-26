@@ -73,8 +73,13 @@ try {
 
 # 测试退出登录
 Write-Host "\n=== 测试退出登录 ==="
+$logoutBody = @{
+    hardware_code = $loginBody.hardware_code
+    software_version = $loginBody.software_version
+}
+
 try {
-    $logoutResponse = Invoke-RestMethod -Uri "$baseUrl/protected/users/logout" -Method Post -Headers $headers
+    $logoutResponse = Invoke-RestMethod -Uri "$baseUrl/protected/users/logout" -Method Post -Body ($logoutBody | ConvertTo-Json) -ContentType "application/json" -Headers $headers
     Write-Host "退出登录响应: $($logoutResponse | ConvertTo-Json -Depth 10)" -ForegroundColor Green
 } catch {
     Write-Host "退出登录失败: $($_.Exception.Response.StatusCode.value__) - $($_.Exception.Response.StatusDescription)" -ForegroundColor Red

@@ -196,12 +196,27 @@
 ### 2.3 用户登出
 
 **请求方式**: POST
-**请求地址**: `/api/protected/users/logout`
-**认证要求**: 需要认证 (Bearer Token)
+**请求地址**: `/api/auth/logout`
+**认证要求**: 无需认证 (Bearer Token 在请求头中传递)
+**请求体**: 
+```json
+{
+  "hardware_code": "string",
+  "software_version": "string"
+}
+```
+
 **响应**: 
 ```json
 {
   "message": "Logout successful"
+}
+```
+
+**错误响应**: 
+```json
+{
+  "error": "Logout token error"
 }
 ```
 

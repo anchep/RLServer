@@ -121,13 +121,20 @@ pub async fn login_user(pool: &Pool, req: LoginRequest, ip: &str, config: &Confi
     Ok((updated_user, access_token))
 }
 
-pub async fn logout_user(pool: &Pool, session_token: &str) -> Result<()> {
+pub async fn logout_user(pool: &Pool, session_token: &str, hardware_code: &str, software_version: &str) -> Result<()> {
     let mut conn = pool.get()?;
     
-    // 删除在线会话
-    diesel::delete(online_users::table)
+    // 删除在线会话（同时验证硬件码和软件版本）
+    let deleted_rows = diesel::delete(online_users::table)
         .filter(online_users::session_token.eq(session_token))
+        .filter(online_users::hardware_code.eq(hardware_code))
+        .filter(online_users::software_version.eq(software_version))
         .execute(&mut conn)?;
+    
+    // 检查是否有记录被删除，如果没有，说明token不存在
+    if deleted_rows == 0 {
+        return Err(AppError::Unauthorized("Logout token error".to_string()));
+    }
     
     Ok(())
 }

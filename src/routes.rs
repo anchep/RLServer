@@ -25,7 +25,6 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
                     // 用户相关路由
                     .service(web::resource("/users/me").route(web::get().to(user::get_user_info_handler)))
                     .service(web::resource("/users/software").route(web::get().to(user::get_available_software_handler)))
-                    .service(web::resource("/users/logout").route(web::post().to(auth::logout_handler)))
                     
                     // 邮箱验证相关路由
                     .service(web::resource("/email/verify").route(web::post().to(email::verify_email_handler)))
@@ -39,5 +38,8 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
                     .service(web::resource("/software").route(web::get().to(software::get_all_software_handler)))
                     .service(web::resource("/software/{software_id}/access").route(web::get().to(software::check_software_access_handler)))
             )
+            
+            // 退出登录路由 - 无需认证，因为目的是使token失效
+            .service(web::resource("/auth/logout").route(web::post().to(auth::logout_handler)))
     );
 }

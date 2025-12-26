@@ -157,6 +157,16 @@ pub struct HeartbeatRequest {
     pub software_version: String,
 }
 
+// 退出登录请求DTO
+#[derive(Debug, Deserialize, Validate)]
+pub struct LogoutRequest {
+    #[validate(length(min = 1, max = 100, message = "Hardware code must be between 1 and 100 characters"))]
+    pub hardware_code: String,
+    
+    #[validate(length(min = 1, max = 50, message = "Software version must be between 1 and 50 characters"))]
+    pub software_version: String,
+}
+
 // JWT Claims
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {

@@ -1,5 +1,5 @@
-# 使用Rust 1.86版本作为构建环境
-FROM rust:1.86 as builder
+# 使用最新版的Rust作为构建环境
+FROM rust:latest as builder
 
 # 设置工作目录
 WORKDIR /app

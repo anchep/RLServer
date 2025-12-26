@@ -76,7 +76,13 @@ pub async fn login_handler(
 pub async fn logout_handler(
     pool: web::Data<Pool>,
     req: HttpRequest,
+    logout_req: web::Json<LogoutRequest>,
 ) -> impl Responder {
+    // 验证请求参数
+    if let Err(err) = logout_req.validate() {
+        return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
+    }
+    
     // 从请求头获取token
     let auth_header = req.headers().get(actix_web::http::header::AUTHORIZATION);
     
@@ -85,12 +91,15 @@ pub async fn logout_handler(
             if auth_str.starts_with("Bearer ") {
                 let session_token = auth_str.trim_start_matches("Bearer ");
                 
-                match logout_user(&pool, session_token).await {
+                match logout_user(&pool, session_token, &logout_req.hardware_code, &logout_req.software_version).await {
                     Ok(_) => {
                         return HttpResponse::Ok().json(serde_json::json!({ "message": "Logout successful" }));
                     }
+                    Err(AppError::Unauthorized(msg)) => {
+                        return HttpResponse::Unauthorized().json(serde_json::json!({ "error": msg }));
+                    }
                     Err(err) => {
-                        return HttpResponse::InternalServerError().json(serde_json::json!({ "error": err.to_string() }));
+                        return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
                     }
                 }
             }

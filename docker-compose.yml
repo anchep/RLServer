@@ -15,7 +15,7 @@ services:
       - "5432"
   
   app:
-    build: .
+    image: rlserver-app:latest
     restart: always
     depends_on:
       - db
@@ -28,6 +28,9 @@ services:
     # 仅在内部暴露端口，不对外暴露
     expose:
       - "28001"
+    volumes:
+      # 挂载target目录，用于在本地编译代码后替换容器中的二进制文件
+      - ./target:/app/target
   
   nginx:
     image: nginx:latest
@@ -36,7 +39,7 @@ services:
       - app
     ports:
       - "28001:80"
-      - "28443:443"
+      - "28043:443"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       # SSL证书卷（生产环境中替换为真实证书路径）

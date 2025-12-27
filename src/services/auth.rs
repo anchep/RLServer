@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use chrono::{Utc, DateTime};
+use chrono::{Utc, DateTime, Duration};
 use crate::database::{models::*, Pool};
 use crate::utils::{crypto::*, jwt::*};
 use crate::schema::*;
@@ -50,11 +50,8 @@ pub async fn register_user(pool: &Pool, req: RegisterRequest, config: &Config) -
         ))
         .get_result::<User>(&mut conn)?;
     
-    // 发送邮箱验证码
-    let activation_token = crate::services::email::send_verification_email(pool, &new_user, config).await?;
-    
-    // 返回用户信息和激活token
-    Ok((new_user, activation_token))
+    // 返回用户信息（不再发送邮箱验证码）
+    Ok((new_user, "".to_string()))
 }
 
 pub async fn login_user(pool: &Pool, req: LoginRequest, ip: &str, config: &Config) -> Result<(User, String)> {
@@ -71,14 +68,7 @@ pub async fn login_user(pool: &Pool, req: LoginRequest, ip: &str, config: &Confi
         return Err(AppError::Unauthorized("Invalid password".to_string()));
     }
     
-    // 检查用户邮箱是否已验证
-    if !user.email_verified {
-        // 未验证邮箱，生成新的激活token并返回
-        let activation_token = crate::services::email::send_verification_email(pool, &user, config).await?;
-        return Ok((user, activation_token));
-    }
-    
-    // 已验证邮箱，正常生成访问令牌
+    // 无论邮箱是否已验证，都正常生成访问令牌
     let access_token = generate_access_token(user.id, &user.username, config)?;
     let refresh_token = generate_refresh_token(user.id, &user.username, config)?;
     
@@ -219,31 +209,96 @@ pub async fn request_password_reset(pool: &Pool, req: ResetPasswordRequest, conf
     let user = users::table
         .filter(users::email.eq(&req.email))
         .first::<User>(&mut conn)?;
+
+    // 生成验证码
+    let code = crate::utils::email::generate_verification_code();
+    let token = crate::utils::jwt::generate_reset_token(user.id, &user.email, config)?;
+    let expires_at = Utc::now() + Duration::minutes(30); // 验证码30分钟内有效
     
-    // 生成密码重置令牌
-    let reset_token = crate::utils::jwt::generate_reset_token(user.id, &user.email, config)?;
+    // 检查是否已经存在未使用的验证码记录
+    let existing_code = verification_codes::table
+        .filter(verification_codes::user_id.eq(user.id))
+        .filter(verification_codes::used.eq(false))
+        .first::<crate::database::verification_code::VerificationCode>(&mut conn)
+        .optional()?;
+    
+    match existing_code {
+        Some(vc) => {
+            // 更新现有记录
+            diesel::update(verification_codes::table.find(vc.id))
+                .set((
+                    verification_codes::code.eq(&code),
+                    verification_codes::token.eq(&token),
+                    verification_codes::expires_at.eq(expires_at),
+                    verification_codes::used.eq(false),
+                ))
+                .execute(&mut conn)?;
+        },
+        None => {
+            // 创建新记录
+            diesel::insert_into(verification_codes::table)
+                .values((
+                    verification_codes::user_id.eq(user.id),
+                    verification_codes::email.eq(&user.email),
+                    verification_codes::code.eq(&code),
+                    verification_codes::token.eq(&token),
+                    verification_codes::expires_at.eq(expires_at),
+                    verification_codes::used.eq(false),
+                    verification_codes::created_at.eq(Utc::now()),
+                ))
+                .execute(&mut conn)?;
+        }
+    }
     
     // 发送密码重置邮件
-    crate::services::email::send_password_reset_email(pool, &user, &reset_token, config).await?;
+    crate::services::email::send_password_reset_email(pool, &user, &code, config).await?;
     
     Ok(())
 }
 
-/// 验证密码重置令牌并更新密码
+/// 验证密码重置验证码并更新密码
 pub async fn verify_reset_password(pool: &Pool, req: VerifyResetPasswordRequest, config: &Config) -> Result<()> {
     let mut conn = pool.get()?;
     
-    // 验证重置令牌
-    let claims = crate::utils::jwt::verify_reset_token(&req.token, config)?;
-    let user_id = claims.sub.parse::<i32>()?;
-    
     // 查找用户
     let user = users::table
-        .find(user_id)
+        .filter(users::username.eq(&req.username))
+        .filter(users::email.eq(&req.email))
         .first::<User>(&mut conn)?;
     
-    // 加密新密码
+    // 查找验证码记录
+    let verification_code = verification_codes::table
+        .filter(verification_codes::user_id.eq(user.id))
+        .filter(verification_codes::code.eq(&req.code))
+        .first::<crate::database::verification_code::VerificationCode>(&mut conn)
+        .optional()?;
+    
+    // 验证验证码是否存在
+    let verification_code = match verification_code {
+        Some(vc) => vc,
+        None => {
+            return Err(AppError::BadRequest("Invalid verification code".to_string()));
+        }
+    };
+    
+    // 验证验证码
+    if verification_code.used {
+        return Err(AppError::BadRequest("Verification code has already been used".to_string()));
+    }
+    
+    if verification_code.expires_at <= Utc::now() {
+        return Err(AppError::BadRequest("Verification code has expired".to_string()));
+    }
+    
+    // 先验证密码强度（在标记验证码为已使用之前）
     let password_hash = hash_password(&req.new_password)?;
+    
+    // 更新验证码为已使用
+    diesel::update(verification_codes::table.find(verification_code.id))
+        .set((
+            verification_codes::used.eq(true),
+        ))
+        .execute(&mut conn)?;
     
     // 更新用户密码
     diesel::update(users::table.find(user.id))

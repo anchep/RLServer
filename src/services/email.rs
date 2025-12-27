@@ -132,16 +132,15 @@ pub async fn verify_email_code(pool: &Pool, user_id: i32, code: &str) -> Result<
 }
 
 /// 发送密码重置邮件
-pub async fn send_password_reset_email(pool: &Pool, user: &User, reset_token: &str, config: &Config) -> Result<()> {
+pub async fn send_password_reset_email(pool: &Pool, user: &User, verification_code: &str, config: &Config) -> Result<()> {
     let mut conn = pool.get()?;
     
     // 构建邮件内容 - 使用配置中的模板
     let subject = &config.password_reset_subject;
-    let reset_link = format!("http://localhost:28001/api/auth/reset-password?token={}", reset_token);
     let body = config.password_reset_template
         .replace("{username}", &user.username)
-        .replace("{reset_link}", &reset_link)
-        .replace("{expiry}", "1 hour");
+        .replace("{code}", &verification_code)
+        .replace("{expiry}", "30 minutes");
     
     // 发送真实邮件
     match send_email(&user.email, subject, body, config).await {

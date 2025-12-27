@@ -137,8 +137,14 @@ pub struct ResetPasswordRequest {
 // 验证密码重置令牌并更新密码DTO
 #[derive(Debug, Deserialize, Validate)]
 pub struct VerifyResetPasswordRequest {
-    #[validate(length(min = 1, message = "Token must not be empty"))]
-    pub token: String,
+    #[validate(length(min = 3, max = 20, message = "Username must be 3-20 characters"))]
+    pub username: String,
+    
+    #[validate(email(message = "Invalid email format"))]
+    pub email: String,
+    
+    #[validate(length(min = 1, message = "Verification code must not be empty"))]
+    pub code: String,
     
     #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
     pub new_password: String,

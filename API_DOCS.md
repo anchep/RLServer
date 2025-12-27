@@ -90,7 +90,7 @@
 }
 ```
 
-### 1.5 验证密码重置令牌并更新密码
+### 1.5 验证密码重置验证码并更新密码
 
 **请求方式**: POST
 **请求地址**: `/api/auth/reset-password/verify`
@@ -98,7 +98,9 @@
 **请求体**: 
 ```json
 {
-  "token": "string",
+  "username": "string",
+  "email": "string",
+  "code": "string",
   "new_password": "string"
 }
 ```

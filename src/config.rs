@@ -63,7 +63,7 @@ impl Config {
             password_reset_subject: env::var("PASSWORD_RESET_SUBJECT").unwrap_or("Password Reset Request".to_string()),
             password_reset_template: convert_newlines(
                 env::var("PASSWORD_RESET_TEMPLATE").unwrap_or(
-                    "Hello {username},\n\nYou requested a password reset for your account. Please click the following link to reset your password:\n\n{reset_link}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nRLServer Team".to_string()
+                    "Hello {username},\n\nYou requested a password reset for your account. Your verification code is: {code}\n\nThis code will expire in {expiry}.\n\nPlease use this code with your username and email to reset your password.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nRLServer Team".to_string()
                 )
             ),
         }

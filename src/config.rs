@@ -27,6 +27,12 @@ pub struct Config {
     pub email_verification_template: String,
     pub password_reset_subject: String,
     pub password_reset_template: String,
+    // 密码强度配置
+    pub password_min_length: usize,
+    pub password_require_uppercase: bool,
+    pub password_require_lowercase: bool,
+    pub password_require_digit: bool,
+    pub password_require_special: bool,
 }
 
 impl Config {
@@ -66,6 +72,12 @@ impl Config {
                     "Hello {username},\n\nYou requested a password reset for your account. Your verification code is: {code}\n\nThis code will expire in {expiry}.\n\nPlease use this code with your username and email to reset your password.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nRLServer Team".to_string()
                 )
             ),
+            // 密码强度配置
+            password_min_length: env::var("PASSWORD_MIN_LENGTH").unwrap_or("8".to_string()).parse().unwrap_or(8),
+            password_require_uppercase: env::var("PASSWORD_REQUIRE_UPPERCASE").unwrap_or("true".to_string()).parse().unwrap_or(true),
+            password_require_lowercase: env::var("PASSWORD_REQUIRE_LOWERCASE").unwrap_or("true".to_string()).parse().unwrap_or(true),
+            password_require_digit: env::var("PASSWORD_REQUIRE_DIGIT").unwrap_or("true".to_string()).parse().unwrap_or(true),
+            password_require_special: env::var("PASSWORD_REQUIRE_SPECIAL").unwrap_or("true".to_string()).parse().unwrap_or(true),
         }
     }
 }

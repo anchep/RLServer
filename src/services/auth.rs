@@ -35,7 +35,7 @@ pub async fn register_user(pool: &Pool, req: RegisterRequest, config: &Config) -
     crate::utils::email::validate_email(&req.email)?;
     
     // 加密密码
-    let password_hash = hash_password(&req.password)?;
+    let password_hash = hash_password(&req.password, config)?;
     
     // 创建用户
     let new_user = diesel::insert_into(users::table)
@@ -50,8 +50,11 @@ pub async fn register_user(pool: &Pool, req: RegisterRequest, config: &Config) -
         ))
         .get_result::<User>(&mut conn)?;
     
-    // 返回用户信息（不再发送邮箱验证码）
-    Ok((new_user, "".to_string()))
+    // 发送邮箱验证码
+    let activation_token = crate::services::email::send_verification_email(pool, &new_user, config).await?;
+    
+    // 返回用户信息和激活token
+    Ok((new_user, activation_token))
 }
 
 pub async fn login_user(pool: &Pool, req: LoginRequest, ip: &str, config: &Config) -> Result<(User, String)> {
@@ -291,7 +294,7 @@ pub async fn verify_reset_password(pool: &Pool, req: VerifyResetPasswordRequest,
     }
     
     // 先验证密码强度（在标记验证码为已使用之前）
-    let password_hash = hash_password(&req.new_password)?;
+    let password_hash = hash_password(&req.new_password, config)?;
     
     // 更新验证码为已使用
     diesel::update(verification_codes::table.find(verification_code.id))

@@ -13,24 +13,54 @@ use lettre::transport::smtp::authentication::Credentials;
 type Result<T> = std::result::Result<T, AppError>;
 
 /// 发送邮箱验证码
-pub async fn send_verification_email(pool: &Pool, user: &User, config: &Config) -> Result<()> {
+pub async fn send_verification_email(pool: &Pool, user: &User, config: &Config) -> Result<String> {
     let mut conn = pool.get()?;
     
-    // 生成验证码
-    let code = generate_verification_code();
-    let expires_at = Utc::now() + Duration::minutes(30); // 验证码30分钟内有效
+    // 检查是否已经存在未使用且未过期的验证码记录
+    let existing_code = verification_codes::table
+        .filter(verification_codes::user_id.eq(user.id))
+        .filter(verification_codes::used.eq(false))
+        .filter(verification_codes::expires_at.gt(Utc::now()))
+        .first::<VerificationCode>(&mut conn)
+        .optional()?;
     
-    // 存储验证码
-    diesel::insert_into(verification_codes::table)
-        .values((
-            verification_codes::user_id.eq(user.id),
-            verification_codes::email.eq(&user.email),
-            verification_codes::code.eq(&code),
-            verification_codes::expires_at.eq(expires_at),
-            verification_codes::used.eq(false),
-            verification_codes::created_at.eq(Utc::now()),
-        ))
-        .execute(&mut conn)?;
+    let (code, token, expires_at) = match existing_code {
+        Some(vc) => {
+            // 已经存在有效验证码，只更新token
+            let new_token = crate::utils::jwt::generate_activation_token(user.id, &user.email, config)?;
+            
+            // 更新现有记录的token和过期时间
+            let new_expires_at = Utc::now() + Duration::minutes(30);
+            diesel::update(verification_codes::table.find(vc.id))
+                .set((
+                    verification_codes::token.eq(&new_token),
+                    verification_codes::expires_at.eq(new_expires_at),
+                ))
+                .execute(&mut conn)?;
+            
+            (vc.code, new_token, new_expires_at)
+        },
+        None => {
+            // 不存在有效验证码，创建新记录
+            let new_code = generate_verification_code();
+            let new_token = crate::utils::jwt::generate_activation_token(user.id, &user.email, config)?;
+            let new_expires_at = Utc::now() + Duration::minutes(30);
+            
+            diesel::insert_into(verification_codes::table)
+                .values((
+                    verification_codes::user_id.eq(user.id),
+                    verification_codes::email.eq(&user.email),
+                    verification_codes::code.eq(&new_code),
+                    verification_codes::token.eq(&new_token),
+                    verification_codes::expires_at.eq(new_expires_at),
+                    verification_codes::used.eq(false),
+                    verification_codes::created_at.eq(Utc::now()),
+                ))
+                .execute(&mut conn)?;
+            
+            (new_code, new_token, new_expires_at)
+        }
+    };
     
     // 构建邮件内容 - 使用配置中的模板
     let subject = &config.email_verification_subject;
@@ -51,7 +81,7 @@ pub async fn send_verification_email(pool: &Pool, user: &User, config: &Config) 
         }
     }
     
-    Ok(())
+    Ok(token)
 }
 
 /// 验证邮箱验证码

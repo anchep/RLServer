@@ -8,7 +8,7 @@ use crate::errors::AppError;
 
 type Result<T> = std::result::Result<T, AppError>;
 
-pub async fn register_user(pool: &Pool, req: RegisterRequest, config: &Config) -> Result<User> {
+pub async fn register_user(pool: &Pool, req: RegisterRequest, config: &Config) -> Result<(User, String)> {
     let mut conn = pool.get()?;
     
     // 检查用户名是否已存在
@@ -51,9 +51,10 @@ pub async fn register_user(pool: &Pool, req: RegisterRequest, config: &Config) -
         .get_result::<User>(&mut conn)?;
     
     // 发送邮箱验证码
-    crate::services::email::send_verification_email(pool, &new_user, config).await?;
+    let activation_token = crate::services::email::send_verification_email(pool, &new_user, config).await?;
     
-    Ok(new_user)
+    // 返回用户信息和激活token
+    Ok((new_user, activation_token))
 }
 
 pub async fn login_user(pool: &Pool, req: LoginRequest, ip: &str, config: &Config) -> Result<(User, String)> {
@@ -70,12 +71,14 @@ pub async fn login_user(pool: &Pool, req: LoginRequest, ip: &str, config: &Confi
         return Err(AppError::Unauthorized("Invalid password".to_string()));
     }
     
-    // 检查邮箱是否已验证
+    // 检查用户邮箱是否已验证
     if !user.email_verified {
-        return Err(AppError::Unauthorized("Please verify your email before logging in".to_string()));
+        // 未验证邮箱，生成新的激活token并返回
+        let activation_token = crate::services::email::send_verification_email(pool, &user, config).await?;
+        return Ok((user, activation_token));
     }
     
-    // 生成访问令牌和刷新令牌
+    // 已验证邮箱，正常生成访问令牌
     let access_token = generate_access_token(user.id, &user.username, config)?;
     let refresh_token = generate_refresh_token(user.id, &user.username, config)?;
     

@@ -33,9 +33,7 @@ pub async fn register_handler(
     }
     
     match register_user(&pool, req.into_inner(), &config).await {
-        Ok(user) => {
-            // 生成激活令牌
-            let activation_token = crate::utils::jwt::generate_activation_token(user.id, &user.email, &config).unwrap();
+        Ok((user, activation_token)) => {
             HttpResponse::Ok().json(RegisterResponse {
                 message: "Registration successful. Please check your email for verification code.".to_string(),
                 activation_token,

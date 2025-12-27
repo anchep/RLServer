@@ -92,6 +92,7 @@ table! {
         user_id -> Int4,
         email -> Varchar,
         code -> Varchar,
+        token -> Varchar,
         expires_at -> Timestamptz,
         used -> Bool,
         created_at -> Timestamptz,

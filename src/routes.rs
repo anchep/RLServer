@@ -32,9 +32,7 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
                     .service(web::resource("/users/me").route(web::get().to(user::get_user_info_handler)))
                     .service(web::resource("/users/software").route(web::get().to(user::get_available_software_handler)))
                     
-                    // 邮箱验证相关路由
-                    .service(web::resource("/email/verify").route(web::post().to(email::verify_email_handler)))
-                    .service(web::resource("/email/resend").route(web::post().to(email::resend_verification_email_handler)))
+                    // 邮箱验证相关路由已删除
                     
                     // 充值相关路由
                     .service(web::resource("/recharge").route(web::post().to(recharge::recharge_handler)))

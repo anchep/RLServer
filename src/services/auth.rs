@@ -77,6 +77,20 @@ pub async fn register_user(pool: &Pool, req: RegisterRequest, config: &Config) -
 pub async fn login_user(pool: &Pool, req: LoginRequest, ip: &str, config: &Config) -> Result<(User, String)> {
     let mut conn = pool.get()?;
     
+    // 检查黑名单
+    let is_blacklisted = blacklist::table
+        .filter(
+            blacklist::username.eq(&req.username)
+            .or(blacklist::hardware_code.eq(&req.hardware_code))
+            .or(blacklist::ip_address.eq(ip))
+        )
+        .first::<crate::database::models::Blacklist>(&mut conn)
+        .optional()?;
+    
+    if is_blacklisted.is_some() {
+        return Err(AppError::BadRequest("Device exception, cannot communicate".to_string()));
+    }
+    
     // 查找用户
     let user = users::table
         .filter(users::username.eq(&req.username))

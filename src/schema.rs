@@ -105,5 +105,15 @@ table! {
     }
 }
 
+table! {
+    blacklist (id) {
+        id -> Int4,
+        username -> Nullable<Varchar>,
+        hardware_code -> Nullable<Varchar>,
+        ip_address -> Nullable<Varchar>,
+        created_at -> Timestamptz,
+    }
+}
+
 // 导出表，以便在其他文件中使用
-allow_tables_to_appear_in_same_query!(login_logs, online_users, recharge_cards, recharge_logs, software, users, verification_codes,);
+allow_tables_to_appear_in_same_query!(login_logs, online_users, recharge_cards, recharge_logs, software, users, verification_codes, blacklist,);

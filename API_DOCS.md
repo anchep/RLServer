@@ -12,7 +12,9 @@
 {
   "username": "string",
   "password": "string",
-  "email": "string"
+  "email": "string",
+  "hardware_code": "string",
+  "ip_address": "string"
 }
 ```
 
@@ -21,6 +23,13 @@
 {
   "message": "Registration successful. Please check your email for verification code.",
   "activation_token": "string"
+}
+```
+
+**错误响应**: 
+```json
+{
+  "error": "Device exception, cannot communicate"
 }
 ```
 

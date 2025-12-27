@@ -115,6 +115,12 @@ pub struct RegisterRequest {
     
     #[validate(email(message = "Invalid email format"))]
     pub email: String,
+    
+    #[validate(length(min = 1, max = 100, message = "Hardware code must be between 1 and 100 characters"))]
+    pub hardware_code: String,
+    
+    #[validate(length(min = 1, max = 50, message = "IP address must be between 1 and 50 characters"))]
+    pub ip_address: String,
 }
 
 // 登录请求DTO
@@ -175,6 +181,18 @@ pub struct HeartbeatRequest {
 pub struct LogoutRequest {
     #[validate(length(min = 1, message = "Session token must not be empty"))]
     pub session_token: String,
+}
+
+// 黑名单表
+#[derive(Queryable, Identifiable, Debug, Serialize, Deserialize, Insertable, AsChangeset)]
+#[diesel(table_name = crate::schema::blacklist)]
+#[diesel(treat_none_as_null = true)]
+pub struct Blacklist {
+    pub id: i32,
+    pub username: Option<String>,
+    pub hardware_code: Option<String>,
+    pub ip_address: Option<String>,
+    pub created_at: DateTime<Utc>,
 }
 
 // JWT Claims

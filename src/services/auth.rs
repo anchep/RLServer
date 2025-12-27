@@ -11,6 +11,20 @@ type Result<T> = std::result::Result<T, AppError>;
 pub async fn register_user(pool: &Pool, req: RegisterRequest, config: &Config) -> Result<(User, String)> {
     let mut conn = pool.get()?;
     
+    // 检查黑名单
+    let is_blacklisted = blacklist::table
+        .filter(
+            blacklist::username.eq(&req.username)
+            .or(blacklist::hardware_code.eq(&req.hardware_code))
+            .or(blacklist::ip_address.eq(&req.ip_address))
+        )
+        .first::<crate::database::models::Blacklist>(&mut conn)
+        .optional()?;
+    
+    if is_blacklisted.is_some() {
+        return Err(AppError::BadRequest("Device exception, cannot communicate".to_string()));
+    }
+    
     // 检查用户名是否已存在
     let existing_user = users::table
         .filter(users::username.eq(&req.username))
@@ -45,6 +59,9 @@ pub async fn register_user(pool: &Pool, req: RegisterRequest, config: &Config) -
             users::email.eq(&req.email),
             users::email_verified.eq(false),
             users::vip_level.eq(0),
+            users::last_login_hardware.eq(&req.hardware_code),
+            users::last_login_ip.eq(&req.ip_address),
+            users::last_login_at.eq(Utc::now()),
             users::created_at.eq(Utc::now()),
             users::updated_at.eq(Utc::now()),
         ))

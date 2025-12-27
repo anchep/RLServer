@@ -26,6 +26,7 @@ pub async fn register_handler(
     pool: web::Data<Pool>,
     config: web::Data<Config>,
     req: web::Json<RegisterRequest>,
+    req_addr: actix_web::HttpRequest,
 ) -> impl Responder {
     // 验证请求参数
     if let Err(err) = req.validate() {

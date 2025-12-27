@@ -3,12 +3,15 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    email_verified BOOLEAN NOT NULL DEFAULT false,
     vip_level INTEGER DEFAULT 0 NOT NULL,
     vip_expires_at TIMESTAMP WITH TIME ZONE,
     last_login_at TIMESTAMP WITH TIME ZONE,
     last_login_hardware VARCHAR(255),
     last_login_version VARCHAR(50),
     last_login_ip VARCHAR(50),
+    last_logout_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
@@ -72,11 +75,25 @@ CREATE TABLE IF NOT EXISTS online_users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
+-- Create verification_codes table
+CREATE TABLE IF NOT EXISTS verification_codes (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    email VARCHAR(255) NOT NULL,
+    code VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_vip_level ON users(vip_level);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_recharge_cards_card_code ON recharge_cards(card_code);
 CREATE INDEX IF NOT EXISTS idx_recharge_cards_is_used ON recharge_cards(is_used);
 CREATE INDEX IF NOT EXISTS idx_online_users_user_id ON online_users(user_id);
 CREATE INDEX IF NOT EXISTS idx_online_users_session_token ON online_users(session_token);
 CREATE INDEX IF NOT EXISTS idx_online_users_last_activity_at ON online_users(last_activity_at);
+CREATE INDEX IF NOT EXISTS idx_verification_codes_email ON verification_codes(email);
+CREATE INDEX IF NOT EXISTS idx_verification_codes_user_id ON verification_codes(user_id);

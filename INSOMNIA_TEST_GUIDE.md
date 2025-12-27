@@ -107,7 +107,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc
 
 ### 预期响应
 - 有效Token: `{"message": "Heartbeat updated successfully"}`
-- 无效Token: `{"error": "找不到此token"}`
+- 无效Token: `{"error": "invalid token"}`
 
 ## 9. 常见问题排查
 
@@ -130,7 +130,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc
 2. **登录获取Token** → `/api/auth/login`
 3. **发送心跳（有效Token）** → `/api/heartbeat` (预期成功)
 4. **第一次退出登录** → `/api/auth/logout` (预期成功)
-5. **发送心跳（已退出的Token）** → `/api/heartbeat` (预期失败：找不到此token)
+5. **发送心跳（已退出的Token）** → `/api/heartbeat` (预期失败：invalid token)
 6. **第二次退出登录** → `/api/auth/logout` (预期失败：Logout token error)
 7. **使用无效Token退出** → `/api/auth/logout` (预期失败：Logout token error)
 

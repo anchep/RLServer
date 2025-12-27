@@ -16,6 +16,8 @@ struct RegisterResponse {
 struct LoginResponse {
     message: String,
     token: String,
+    vip_level: i32,
+    vip_expires_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 // 用户注册
@@ -58,10 +60,12 @@ pub async fn login_handler(
     let ip = conn_info.realip_remote_addr().unwrap_or("0.0.0.0");
     
     match login_user(&pool, req.into_inner(), ip, &config).await {
-        Ok((_, token)) => {
+        Ok((user, token)) => {
             HttpResponse::Ok().json(LoginResponse {
                 message: "Login successful".to_string(),
                 token,
+                vip_level: user.vip_level,
+                vip_expires_at: user.vip_expires_at,
             })
         }
         Err(err) => {
@@ -109,10 +113,12 @@ pub async fn refresh_token_handler(
     req: web::Json<RefreshTokenRequest>,
 ) -> impl Responder {
     match refresh_access_token(&pool, &req.refresh_token, &config).await {
-        Ok((_, token)) => {
+        Ok((user, token)) => {
             HttpResponse::Ok().json(LoginResponse {
                 message: "Token refreshed successfully".to_string(),
                 token,
+                vip_level: user.vip_level,
+                vip_expires_at: user.vip_expires_at,
             })
         }
         Err(err) => {

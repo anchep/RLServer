@@ -129,6 +129,22 @@ cargo build --release
 #### 获取可用软件列表
 - **URL**: `/api/protected/users/software`
 - **方法**: `GET`
+- **响应示例**:
+  ```json
+  {
+    "vip_level": 1,
+    "vip_expires_at": "2026-12-23T14:30:11Z",
+    "software_list": [
+      {
+        "id": 1,
+        "name": "软件A",
+        "required_vip_level": 0,
+        "created_at": "2025-12-23T14:30:11Z",
+        "updated_at": "2025-12-23T14:30:11Z"
+      }
+    ]
+  }
+  ```
 
 #### 用户登出
 - **URL**: `/api/auth/logout`
@@ -239,13 +255,43 @@ cargo build --release
 
 ### Docker部署
 
-1. 确保已安装Docker和Docker Compose
-2. 创建 `docker-compose.yml` 文件（示例已提供）
-3. 运行以下命令启动服务：
+#### 1. 准备工作
+
+- 确保已安装Docker和Docker Compose
+- 克隆项目代码
+- 进入项目目录
+
+#### 2. SSL证书生成
+
+服务支持HTTPS，需要生成SSL证书：
+
+- **Linux/macOS**: 运行 `generate_ssl_cert.sh` 脚本生成自签名证书
+- **Windows**: 运行 `generate_ssl_cert.ps1` 脚本生成自签名证书
+
+**注意**: 在生产环境中，请使用真实的SSL证书（如Let's Encrypt）
+
+#### 3. 启动服务
 
 ```bash
-docker-compose up -d
+docker-compose up -d --build
 ```
+
+#### 4. 访问服务
+
+- HTTP端口: 28001（自动重定向到HTTPS）
+- HTTPS端口: 28043
+
+### 环境变量配置
+
+主要环境变量说明：
+
+| 变量名 | 说明 | 默认值 |
+|-------|------|--------|
+| DATABASE_URL | 数据库连接URL | postgres://admin:password@db:5432/rl_server |
+| JWT_SECRET | JWT签名密钥 | your-secret-key-here |
+| SERVER_PORT | 服务器端口 | 28001 |
+| HEARTBEAT_INTERVAL | 心跳间隔（秒） | 600 |
+| CLEANUP_INTERVAL | 清理间隔（秒） | 300 |
 
 ## 日志管理
 

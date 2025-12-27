@@ -42,7 +42,9 @@
 ```json
 {
   "message": "Login successful",
-  "token": "string"
+  "token": "string",
+  "vip_level": 0,
+  "vip_expires_at": "2025-12-23T14:30:11Z"
 }
 ```
 
@@ -62,7 +64,9 @@
 ```json
 {
   "message": "Token refreshed successfully",
-  "token": "string"
+  "token": "string",
+  "vip_level": 0,
+  "vip_expires_at": "2025-12-23T14:30:11Z"
 }
 ```
 
@@ -138,15 +142,19 @@
 **认证要求**: 需要认证 (Bearer Token)
 **响应**: 
 ```json
-[
-  {
-    "id": 1,
-    "name": "string",
-    "required_vip_level": 0,
-    "created_at": "2025-12-23T14:30:11Z",
-    "updated_at": "2025-12-23T14:30:11Z"
-  }
-]
+{
+  "vip_level": 0,
+  "vip_expires_at": "2025-12-23T14:30:11Z",
+  "software_list": [
+    {
+      "id": 1,
+      "name": "string",
+      "required_vip_level": 0,
+      "created_at": "2025-12-23T14:30:11Z",
+      "updated_at": "2025-12-23T14:30:11Z"
+    }
+  ]
+}
 ```
 
 ### 2.3 用户登出

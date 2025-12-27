@@ -21,7 +21,7 @@ pub async fn update_heartbeat(pool: &Pool, session_token: &str, hardware_code: &
     
     // 检查是否有记录被更新，如果没有，说明token不存在
     if updated_rows == 0 {
-        return Err(AppError::BadRequest("找不到此token".to_string()));
+        return Err(AppError::BadRequest("invalid token".to_string()));
     }
     
     Ok(())

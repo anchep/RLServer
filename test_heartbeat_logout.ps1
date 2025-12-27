@@ -85,7 +85,7 @@ try {
     Write-Host "✓ Expected behavior: Heartbeat request failed" -ForegroundColor Green
     Write-Host "  Status code: $($_.Exception.Response.StatusCode.value__) - $($_.Exception.Response.StatusDescription)" -ForegroundColor Green
     Write-Host "  Error details: $($_.ErrorDetails.Message)" -ForegroundColor Green
-    if ($_.ErrorDetails.Message -like "*找不到此token*" -or $_.ErrorDetails.Message -like "*Invalid token*" -or $_.ErrorDetails.Message -like "*No record found*") {
+    if ($_.ErrorDetails.Message -like "*invalid token*" -or $_.ErrorDetails.Message -like "*Invalid token*" -or $_.ErrorDetails.Message -like "*No record found*") {
         Write-Host "  ✓ Error message matches expectation: Contains invalid token hint" -ForegroundColor Green
     } else {
         Write-Host "  ✗ Error message does not match expectation: Should contain invalid token hint" -ForegroundColor Yellow
@@ -122,7 +122,7 @@ try {
     Write-Host "✓ Expected behavior: Logout request failed" -ForegroundColor Green
     Write-Host "  Status code: $($_.Exception.Response.StatusCode.value__) - $($_.Exception.Response.StatusDescription)" -ForegroundColor Green
     Write-Host "  Error details: $($_.ErrorDetails.Message)" -ForegroundColor Green
-    if ($_.ErrorDetails.Message -like "*Logout token error*" -or $_.ErrorDetails.Message -like "*Invalid token*" -or $_.ErrorDetails.Message -like "*Unauthorized*" -or $_.ErrorDetails.Message -like "*No record found*" -or $_.ErrorDetails.Message -like "*找不到此token*") {
+    if ($_.ErrorDetails.Message -like "*Logout token error*" -or $_.ErrorDetails.Message -like "*Invalid token*" -or $_.ErrorDetails.Message -like "*Unauthorized*" -or $_.ErrorDetails.Message -like "*No record found*" -or $_.ErrorDetails.Message -like "*invalid token*") {
         Write-Host "  ✓ Error message matches expectation: Contains invalid token hint" -ForegroundColor Green
     } else {
         Write-Host "  ✗ Error message does not match expectation: Should contain invalid token hint" -ForegroundColor Yellow
@@ -141,7 +141,7 @@ try {
     Write-Host "✓ Expected behavior: Heartbeat request failed" -ForegroundColor Green
     Write-Host "  Status code: $($_.Exception.Response.StatusCode.value__) - $($_.Exception.Response.StatusDescription)" -ForegroundColor Green
     Write-Host "  Error details: $($_.ErrorDetails.Message)" -ForegroundColor Green
-    if ($_.ErrorDetails.Message -like "*找不到此token*" -or $_.ErrorDetails.Message -like "*Invalid token*" -or $_.ErrorDetails.Message -like "*No record found*" -or $_.ErrorDetails.Message -like "*Unauthorized*") {
+    if ($_.ErrorDetails.Message -like "*invalid token*" -or $_.ErrorDetails.Message -like "*Invalid token*" -or $_.ErrorDetails.Message -like "*No record found*" -or $_.ErrorDetails.Message -like "*Unauthorized*") {
         Write-Host "  ✓ Error message matches expectation: Contains invalid token hint" -ForegroundColor Green
     } else {
         Write-Host "  ✗ Error message does not match expectation: Should contain invalid token hint" -ForegroundColor Yellow

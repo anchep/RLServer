@@ -54,7 +54,11 @@ RLServer/
 ├── migrations/              # 数据库迁移文件
 ├── Cargo.toml               # 项目依赖
 ├── .env                     # 环境变量配置
-└── .env.example             # 环境变量示例
+├── .env.example             # 环境变量示例
+├── docker-compose.yml       # Docker Compose配置
+├── nginx.conf               # Nginx配置
+├── generate_ssl_cert.sh     # Linux/macOS SSL证书生成脚本
+└── generate_ssl_cert.ps1    # Windows SSL证书生成脚本
 ```
 
 ## 环境配置
@@ -75,7 +79,7 @@ cargo run
 
 ```bash
 cargo build --release
-./target/release/rust-server
+./target/release/rlserver
 ```
 
 ## API文档
@@ -89,7 +93,8 @@ cargo build --release
   ```json
   {
     "username": "test_user",
-    "password": "password123"
+    "password": "password123",
+    "email": "user@example.com"
   }
   ```
 
@@ -105,6 +110,15 @@ cargo build --release
     "software_version": "v1.0.0"
   }
   ```
+- **响应示例**:
+  ```json
+  {
+    "message": "Login successful",
+    "token": "jwt-token",
+    "vip_level": 1,
+    "vip_expires_at": "2026-12-23T14:30:11Z"
+  }
+  ```
 
 #### 心跳上传
 - **URL**: `/api/heartbeat`
@@ -115,6 +129,46 @@ cargo build --release
     "session_token": "jwt-token",
     "hardware_code": "hw-123456",
     "software_version": "v1.0.0"
+  }
+  ```
+
+#### 刷新访问令牌
+- **URL**: `/api/auth/refresh`
+- **方法**: `POST`
+- **请求体**:
+  ```json
+  {
+    "refresh_token": "refresh-token"
+  }
+  ```
+- **响应示例**:
+  ```json
+  {
+    "message": "Token refreshed successfully",
+    "token": "new-jwt-token",
+    "vip_level": 1,
+    "vip_expires_at": "2026-12-23T14:30:11Z"
+  }
+  ```
+
+#### 密码重置请求
+- **URL**: `/api/auth/reset-password`
+- **方法**: `POST`
+- **请求体**:
+  ```json
+  {
+    "email": "user@example.com"
+  }
+  ```
+
+#### 验证密码重置令牌并更新密码
+- **URL**: `/api/auth/verify-reset-password`
+- **方法**: `POST`
+- **请求体**:
+  ```json
+  {
+    "token": "reset-token",
+    "new_password": "new-password123"
   }
   ```
 
@@ -178,14 +232,26 @@ cargo build --release
 - id: 主键
 - username: 用户名
 - password_hash: 密码哈希
+- email: 邮箱
+- email_verified: 邮箱是否已验证
 - vip_level: VIP等级
 - vip_expires_at: VIP到期时间
 - last_login_at: 最后登录时间
 - last_login_hardware: 最后登录硬件码
 - last_login_version: 最后登录软件版本
 - last_login_ip: 最后登录IP
+- last_logout_at: 最后登出时间
 - created_at: 创建时间
 - updated_at: 更新时间
+
+### verification_codes (验证码表)
+- id: 主键
+- user_id: 用户ID
+- email: 邮箱
+- code: 验证码
+- expires_at: 过期时间
+- used: 是否已使用
+- created_at: 创建时间
 
 ### software (软件表)
 - id: 主键
@@ -278,8 +344,8 @@ docker-compose up -d --build
 
 #### 4. 访问服务
 
-- HTTP端口: 28001（自动重定向到HTTPS）
-- HTTPS端口: 28043
+- HTTP端口: 28001（当前未重定向到HTTPS）
+- HTTPS端口: 28043（需要生成SSL证书后使用）
 
 ### 环境变量配置
 

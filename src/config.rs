@@ -2,6 +2,11 @@ use dotenv::dotenv;
 use std::env;
 use std::time::Duration;
 
+/// 将字符串中的\n转换为实际换行符
+fn convert_newlines(input: String) -> String {
+    input.replace("\\n", "\n")
+}
+
 #[derive(Clone)]
 pub struct Config {
     pub database_url: String,
@@ -17,6 +22,11 @@ pub struct Config {
     pub smtp_from_email: String,
     pub smtp_ssl: bool,
     pub smtp_timeout: Duration,
+    // 邮件模板配置
+    pub email_verification_subject: String,
+    pub email_verification_template: String,
+    pub password_reset_subject: String,
+    pub password_reset_template: String,
 }
 
 impl Config {
@@ -42,6 +52,19 @@ impl Config {
             smtp_ssl: env::var("SMTP_SSL").unwrap_or("false".to_string()).parse().unwrap_or(false),
             smtp_timeout: Duration::from_secs(
                 env::var("SMTP_TIMEOUT").unwrap_or("30".to_string()).parse().unwrap_or(30)
+            ),
+            // 邮件模板配置
+            email_verification_subject: env::var("EMAIL_VERIFICATION_SUBJECT").unwrap_or("Email Verification Code".to_string()),
+            email_verification_template: convert_newlines(
+                env::var("EMAIL_VERIFICATION_TEMPLATE").unwrap_or(
+                    "Your verification code is: {code}\n\nThis code will expire in 30 minutes.".to_string()
+                )
+            ),
+            password_reset_subject: env::var("PASSWORD_RESET_SUBJECT").unwrap_or("Password Reset Request".to_string()),
+            password_reset_template: convert_newlines(
+                env::var("PASSWORD_RESET_TEMPLATE").unwrap_or(
+                    "Hello {username},\n\nYou requested a password reset for your account. Please click the following link to reset your password:\n\n{reset_link}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nRLServer Team".to_string()
+                )
             ),
         }
     }

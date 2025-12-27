@@ -19,7 +19,8 @@
 **响应**: 
 ```json
 {
-  "message": "Registration successful. Please check your email for verification code."
+  "message": "Registration successful. Please check your email for verification code.",
+  "activation_token": "string"
 }
 ```
 
@@ -106,6 +107,51 @@
 ```json
 {
   "message": "Password reset successful"
+}
+```
+
+### 1.6 通过激活令牌验证邮箱
+
+**请求方式**: POST
+**请求地址**: `/api/auth/verify-email`
+**认证要求**: 无需认证
+**请求体**: 
+```json
+{
+  "token": "string",
+  "code": "string"
+}
+```
+
+**响应**: 
+```json
+{
+  "message": "Email verified successfully"
+}
+```
+
+**错误响应**: 
+```json
+{
+  "error": "Invalid verification code"
+}
+```
+
+```json
+{
+  "error": "Verification code has already been used"
+}
+```
+
+```json
+{
+  "error": "Verification code has expired"
+}
+```
+
+```json
+{
+  "error": "Invalid token type"
 }
 ```
 

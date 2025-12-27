@@ -5,20 +5,23 @@ use crate::middleware::auth::auth_middleware;
 // 配置路由
 pub fn configure_routes(cfg: &mut web::ServiceConfig) {
     // 公开路由 - 无需认证
-    cfg.service(
-        web::scope("/api")
-            // 认证相关路由
-            .service(web::resource("/auth/register").route(web::post().to(auth::register_handler)))
-            .service(web::resource("/auth/login").route(web::post().to(auth::login_handler)))
-            .service(web::resource("/auth/refresh").route(web::post().to(auth::refresh_token_handler)))
-            .service(web::resource("/auth/reset-password").route(web::post().to(auth::reset_password_handler)))
-            .service(web::resource("/auth/reset-password/verify").route(web::post().to(auth::verify_reset_password_handler)))
-            
-            // 退出登录路由 - 无需认证，因为目的是使token失效
-            .service(web::resource("/auth/logout").route(web::post().to(auth::logout_handler)))
-            
-            // 心跳路由
-            .service(web::resource("/heartbeat").route(web::post().to(heartbeat::heartbeat_handler)))
+            cfg.service(
+                web::scope("/api")
+                    // 认证相关路由
+                    .service(web::resource("/auth/register").route(web::post().to(auth::register_handler)))
+                    .service(web::resource("/auth/login").route(web::post().to(auth::login_handler)))
+                    .service(web::resource("/auth/refresh").route(web::post().to(auth::refresh_token_handler)))
+                    .service(web::resource("/auth/reset-password").route(web::post().to(auth::reset_password_handler)))
+                    .service(web::resource("/auth/reset-password/verify").route(web::post().to(auth::verify_reset_password_handler)))
+                    
+                    // 退出登录路由 - 无需认证，因为目的是使token失效
+                    .service(web::resource("/auth/logout").route(web::post().to(auth::logout_handler)))
+                    
+                    // 邮箱验证路由 - 无需认证，使用激活令牌
+                    .service(web::resource("/auth/verify-email").route(web::post().to(email::verify_email_with_token_handler)))
+                    
+                    // 心跳路由
+                    .service(web::resource("/heartbeat").route(web::post().to(heartbeat::heartbeat_handler)))
             
             // 需要认证的路由
             .service(

@@ -22,18 +22,16 @@ services:
     restart: always
     depends_on:
       - db
-    environment:
-      DATABASE_URL: postgres://admin:password@db:5432/rl_server
-      JWT_SECRET: your-secret-key-here
-      HEARTBEAT_INTERVAL: 600
-      CLEANUP_INTERVAL: 300
-      SERVER_PORT: 28001
+    env_file:
+      - .env
     # 仅在内部暴露端口，不对外暴露
     expose:
       - "28001"
     volumes:
       # 挂载target目录，用于在本地编译代码后替换容器中的二进制文件
       - ./target:/app/target
+      # 挂载.env文件
+      - ./.env:/app/.env
   
   nginx:
     image: nginx:latest

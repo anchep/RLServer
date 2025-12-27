@@ -117,3 +117,22 @@ impl From<regex::Error> for AppError {
         AppError::BadRequest(err.to_string())
     }
 }
+
+// 添加lettre库错误的From实现
+impl From<lettre::error::Error> for AppError {
+    fn from(err: lettre::error::Error) -> Self {
+        AppError::InternalServerError(err.to_string())
+    }
+}
+
+impl From<lettre::address::AddressError> for AppError {
+    fn from(err: lettre::address::AddressError) -> Self {
+        AppError::InternalServerError(err.to_string())
+    }
+}
+
+impl From<native_tls::Error> for AppError {
+    fn from(err: native_tls::Error) -> Self {
+        AppError::InternalServerError(err.to_string())
+    }
+}

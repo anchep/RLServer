@@ -70,6 +70,11 @@ pub async fn login_user(pool: &Pool, req: LoginRequest, ip: &str, config: &Confi
         return Err(AppError::Unauthorized("Invalid password".to_string()));
     }
     
+    // 检查邮箱是否已验证
+    if !user.email_verified {
+        return Err(AppError::Unauthorized("Please verify your email before logging in".to_string()));
+    }
+    
     // 生成访问令牌和刷新令牌
     let access_token = generate_access_token(user.id, &user.username, config)?;
     let refresh_token = generate_refresh_token(user.id, &user.username, config)?;

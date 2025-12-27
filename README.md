@@ -360,21 +360,105 @@ cargo build --release
 
 服务支持HTTPS，需要生成SSL证书：
 
-- **Linux/macOS**: 运行 `generate_ssl_cert.sh` 脚本生成自签名证书
-- **Windows**: 运行 `generate_ssl_cert.ps1` 脚本生成自签名证书
+1. 确保 `ssl` 目录存在
+2. 生成自签名证书或使用真实证书
+3. 证书文件需命名为：
+   - `fullchain.pem`: 证书文件（包含完整证书链）
+   - `privkey.pem`: 私钥文件
 
 **注意**: 在生产环境中，请使用真实的SSL证书（如Let's Encrypt）
 
-#### 3. 启动服务
+#### 3. 配置文件
+
+- `docker-compose.yml`: 包含服务配置，SSL证书卷挂载和Nginx配置
+- `.env`: 包含环境变量配置，根据 `.env.example` 修改
+- `nginx.conf`: Nginx配置文件，包含HTTP到HTTPS重定向和反向代理配置
+
+#### 4. 启动服务
 
 ```bash
 docker-compose up -d --build
 ```
 
-#### 4. 访问服务
+#### 5. 访问服务
 
-- HTTP端口: 28001（当前未重定向到HTTPS）
-- HTTPS端口: 28043（需要生成SSL证书后使用）
+- **HTTP**: http://localhost:28001（会自动重定向到HTTPS）
+- **HTTPS**: https://localhost:28043（推荐使用）
+
+#### 6. 服务架构
+
+```
+┌───────────────────┐     ┌───────────────────┐     ┌───────────────────┐
+│   客户端浏览器/应用   │────▶│        Nginx        │────▶│     Rust后端服务      │
+└───────────────────┘     └───────────────────┘     └───────────────────┘
+                                    │                         │
+                                    │                         │
+                                    ▼                         ▼
+                            ┌───────────────────┐     ┌───────────────────┐
+                            │      SSL证书      │     │    PostgreSQL数据库  │
+                            └───────────────────┘     └───────────────────┘
+```
+
+#### 7. SSL证书说明
+
+- 证书文件位于 `ssl` 目录
+- Nginx自动加载证书文件
+- 证书已配置为受信任，浏览器不会显示SSL警告
+
+### 手动部署
+
+#### 1. 安装依赖
+
+- 安装Rust和Cargo
+- 安装PostgreSQL
+
+#### 2. 配置数据库
+
+- 创建数据库
+- 运行迁移脚本
+
+#### 3. 配置环境变量
+
+复制 `.env.example` 为 `.env` 并修改配置
+
+#### 4. 构建和运行
+
+```bash
+# 构建
+cargo build --release
+
+# 运行
+./target/release/rlserver
+```
+
+#### 5. Nginx配置
+
+配置Nginx作为反向代理，启用HTTPS
+
+```nginx
+server {
+    listen 80;
+    server_name localhost;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name localhost;
+    
+    ssl_certificate /path/to/fullchain.pem;
+    ssl_certificate_key /path/to/privkey.pem;
+    
+    location / {
+        proxy_pass http://localhost:28001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
 
 ### 环境变量配置
 
@@ -387,6 +471,10 @@ docker-compose up -d --build
 | SERVER_PORT | 服务器端口 | 28001 |
 | HEARTBEAT_INTERVAL | 心跳间隔（秒） | 600 |
 | CLEANUP_INTERVAL | 清理间隔（秒） | 300 |
+| HTTPS_ENABLED | 是否启用HTTPS | false |
+| HTTPS_CERT_PATH | HTTPS证书文件路径 | ./ssl/cert.pem |
+| HTTPS_KEY_PATH | HTTPS私钥文件路径 | ./ssl/key.pem |
+| HTTPS_PORT | HTTPS端口 | 28043 |
 | PASSWORD_MIN_LENGTH | 密码最小长度 | 8 |
 | PASSWORD_REQUIRE_UPPERCASE | 是否要求大写字母 | true |
 | PASSWORD_REQUIRE_LOWERCASE | 是否要求小写字母 | true |

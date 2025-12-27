@@ -12,7 +12,7 @@ actix-rt = "2.10.0"
 actix-cors = "0.7.1"
 
 # 数据库
-diesel = { version = "2.2.1", features = ["sqlite", "postgres", "chrono", "r2d2"] }
+diesel = { version = "2.2.1", features = ["postgres", "chrono", "r2d2"] }
 diesel_migrations = "2.2.0"
 r2d2 = "0.8.10"
 

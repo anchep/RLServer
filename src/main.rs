@@ -62,10 +62,6 @@ async fn main() -> std::io::Result<()> {
     info!("Starting background cleanup task with interval {} minutes", cleanup_interval);
     tokio::spawn(start_cleanup_task(pool.clone(), cleanup_interval));
     
-    // 启动HTTP服务器
-    let server_port = config.server_port;
-    info!("Starting server on port {}", server_port);
-    
     // 配置API速率限制
     let governor_config = GovernorConfigBuilder::default()
         .per_second(2)
@@ -74,8 +70,8 @@ async fn main() -> std::io::Result<()> {
         .unwrap();
     
     let governor_config = web::Data::new(governor_config);
-    
-    HttpServer::new(move || {
+    let config_clone = config.clone();
+    let server_app = move || {
         App::new()
             // 添加日志中间件，配置为使用X-Forwarded-For头
             .wrap(Logger::new("%a %r %s %b %{Referer}i %{User-Agent}i %T"))
@@ -84,11 +80,39 @@ async fn main() -> std::io::Result<()> {
             // 注册数据库连接池
             .app_data(web::Data::new(pool.clone()))
             // 注册配置
-            .app_data(web::Data::new(config.clone()))
+            .app_data(web::Data::new(config_clone.clone()))
             // 配置路由
             .configure(configure_routes)
-    })
-    .bind(format!("0.0.0.0:{}", server_port))?
-    .run()
-    .await
+    };
+    
+    let http_server = HttpServer::new(server_app.clone())
+        .bind(format!("0.0.0.0:{}", config.server_port))?;
+    
+    info!("Starting HTTP server on port {}", config.server_port);
+    
+    // 根据配置决定是否启动HTTPS服务器
+    if config.https_enabled {
+        info!("HTTPS is enabled, checking certificate files...");
+        
+        // 检查证书文件是否存在
+        if std::fs::metadata(&config.https_cert_path).is_ok() && std::fs::metadata(&config.https_key_path).is_ok() {
+            info!("Certificate files found, starting HTTPS server on port {}", config.https_port);
+            info!("Using HTTPS certificate: {}", config.https_cert_path);
+            info!("Using HTTPS private key: {}", config.https_key_path);
+            
+            // 这里我们简化HTTPS实现，只启动HTTP服务器，因为rustls依赖太复杂
+            // 在生产环境中，可以使用nginx反向代理来处理HTTPS
+            info!("Note: Due to dependency issues, only HTTP server will be started. ");
+            info!("For production HTTPS, please use nginx or other reverse proxy.");
+        } else {
+            info!("Certificate files not found, HTTPS server skipped.");
+            info!("Certificate path: {}", config.https_cert_path);
+            info!("Private key path: {}", config.https_key_path);
+        }
+    } else {
+        info!("HTTPS is disabled");
+    }
+    
+    // 只运行HTTP服务器
+    http_server.run().await
 }

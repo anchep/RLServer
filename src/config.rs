@@ -14,6 +14,11 @@ pub struct Config {
     pub heartbeat_interval: Duration,
     pub cleanup_interval: Duration,
     pub server_port: u16,
+    // HTTPS配置
+    pub https_enabled: bool,
+    pub https_cert_path: String,
+    pub https_key_path: String,
+    pub https_port: u16,
     // SMTP配置
     pub smtp_host: String,
     pub smtp_port: u16,
@@ -49,6 +54,11 @@ impl Config {
                 env::var("CLEANUP_INTERVAL").unwrap_or("300".to_string()).parse().unwrap_or(300)
             ),
             server_port: env::var("SERVER_PORT").unwrap_or("28001".to_string()).parse().unwrap_or(28001),
+            // HTTPS配置
+            https_enabled: env::var("HTTPS_ENABLED").unwrap_or("false".to_string()).parse().unwrap_or(false),
+            https_cert_path: env::var("HTTPS_CERT_PATH").unwrap_or("./ssl/cert.pem".to_string()),
+            https_key_path: env::var("HTTPS_KEY_PATH").unwrap_or("./ssl/key.pem".to_string()),
+            https_port: env::var("HTTPS_PORT").unwrap_or("28043".to_string()).parse().unwrap_or(28043),
             // SMTP配置
             smtp_host: env::var("SMTP_HOST").unwrap_or("smtp.example.com".to_string()),
             smtp_port: env::var("SMTP_PORT").unwrap_or("587".to_string()).parse().unwrap_or(587),

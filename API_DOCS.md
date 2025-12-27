@@ -197,6 +197,12 @@
     {
       "id": 1,
       "name": "string",
+      "chinese_name": "软件中文名",
+      "description": "软件简介",
+      "detailed_description": "软件详细介绍",
+      "executable_name": "可执行程序名.exe",
+      "md5_checksum": "md5校验码",
+      "requires_admin": false,
       "required_vip_level": 0,
       "created_at": "2025-12-23T14:30:11Z",
       "updated_at": "2025-12-23T14:30:11Z"
@@ -296,6 +302,12 @@
   {
     "id": 1,
     "name": "string",
+    "chinese_name": "软件中文名",
+    "description": "软件简介",
+    "detailed_description": "软件详细介绍",
+    "executable_name": "可执行程序名.exe",
+    "md5_checksum": "md5校验码",
+    "requires_admin": false,
     "required_vip_level": 0,
     "created_at": "2025-12-23T14:30:11Z",
     "updated_at": "2025-12-23T14:30:11Z"

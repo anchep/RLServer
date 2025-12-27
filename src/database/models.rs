@@ -31,6 +31,12 @@ pub struct User {
 pub struct Software {
     pub id: i32,
     pub name: String,
+    pub chinese_name: String,
+    pub description: String,
+    pub detailed_description: String,
+    pub executable_name: String,
+    pub md5_checksum: String,
+    pub requires_admin: bool,
     pub required_vip_level: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

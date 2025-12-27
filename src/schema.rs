@@ -61,6 +61,12 @@ table! {
     software (id) {
         id -> Int4,
         name -> Varchar,
+        chinese_name -> Varchar,
+        description -> Text,
+        detailed_description -> Text,
+        executable_name -> Varchar,
+        md5_checksum -> Varchar,
+        requires_admin -> Bool,
         required_vip_level -> Int4,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,

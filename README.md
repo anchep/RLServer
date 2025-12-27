@@ -191,7 +191,13 @@ cargo build --release
     "software_list": [
       {
         "id": 1,
-        "name": "软件A",
+        "name": "software_a",
+        "chinese_name": "软件A",
+        "description": "这是软件A的简介",
+        "detailed_description": "这是软件A的详细介绍，包含软件的功能、特点等信息",
+        "executable_name": "software_a.exe",
+        "md5_checksum": "1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t",
+        "requires_admin": false,
         "required_vip_level": 0,
         "created_at": "2025-12-23T14:30:11Z",
         "updated_at": "2025-12-23T14:30:11Z"
@@ -211,6 +217,23 @@ cargo build --release
   ```json
   {
     "card_code": "RC-123456-7890"
+  }
+  ```
+- **响应示例**:
+  ```json
+  {
+    "message": "Recharge successful",
+    "vip_level": 1,
+    "vip_expires_at": "2026-12-23T14:30:11Z",
+    "recharge_log": {
+      "id": 1,
+      "user_id": 1,
+      "card_code": "RC-123456-7890",
+      "vip_level": 1,
+      "duration_days": 30,
+      "recharge_time": "2025-12-23T14:30:11Z",
+      "created_at": "2025-12-23T14:30:11Z"
+    }
   }
   ```
 
@@ -256,6 +279,12 @@ cargo build --release
 ### software (软件表)
 - id: 主键
 - name: 软件名称
+- chinese_name: 软件中文名
+- description: 软件简介
+- detailed_description: 软件详细介绍
+- executable_name: 可执行程序名
+- md5_checksum: MD5校验码
+- requires_admin: 是否需要管理员权限
 - required_vip_level: 所需VIP等级 (0表示免费)
 - created_at: 创建时间
 - updated_at: 更新时间
@@ -358,6 +387,11 @@ docker-compose up -d --build
 | SERVER_PORT | 服务器端口 | 28001 |
 | HEARTBEAT_INTERVAL | 心跳间隔（秒） | 600 |
 | CLEANUP_INTERVAL | 清理间隔（秒） | 300 |
+| PASSWORD_MIN_LENGTH | 密码最小长度 | 8 |
+| PASSWORD_REQUIRE_UPPERCASE | 是否要求大写字母 | true |
+| PASSWORD_REQUIRE_LOWERCASE | 是否要求小写字母 | true |
+| PASSWORD_REQUIRE_DIGIT | 是否要求数字 | true |
+| PASSWORD_REQUIRE_SPECIAL | 是否要求特殊字符 | true |
 
 ## 日志管理
 

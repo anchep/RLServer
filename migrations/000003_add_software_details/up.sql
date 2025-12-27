@@ -1,0 +1,8 @@
+-- 添加软件详情字段到software表
+ALTER TABLE software
+ADD COLUMN chinese_name VARCHAR NOT NULL DEFAULT '',
+ADD COLUMN description TEXT NOT NULL DEFAULT '',
+ADD COLUMN detailed_description TEXT NOT NULL DEFAULT '',
+ADD COLUMN executable_name VARCHAR NOT NULL DEFAULT '',
+ADD COLUMN md5_checksum VARCHAR NOT NULL DEFAULT '',
+ADD COLUMN requires_admin BOOLEAN NOT NULL DEFAULT FALSE;

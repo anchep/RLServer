@@ -9,13 +9,23 @@ pub async fn recharge_with_card(pool: &Pool, user_id: i32, card_code: &str) -> R
     let mut conn = pool.get()?;
     
     // 查找卡密
-    let mut card = recharge_cards::table
+    let card = recharge_cards::table
         .filter(recharge_cards::card_code.eq(card_code))
-        .first::<RechargeCard>(&mut conn)?;
+        .first::<RechargeCard>(&mut conn)
+        .optional()?;
+    
+    // 检查卡密是否存在
+    let mut card = match card {
+        Some(card) => card,
+        None => {
+            return Err(anyhow::anyhow!("Card not found"));
+        }
+    };
     
     // 检查卡密是否已使用
     if card.is_used {
-        return Err(anyhow::anyhow!("Card already used"));
+        let used_at = card.used_at.expect("Used card should have used_at timestamp");
+        return Err(anyhow::anyhow!("Card already used at {}", used_at));
     }
     
     // 获取当前用户信息

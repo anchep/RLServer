@@ -7,7 +7,8 @@ use crate::database::Pool;
 #[derive(Debug, Serialize)]
 struct RechargeResponse {
     message: String,
-    user: User,
+    vip_level: i32,
+    vip_expires_at: Option<chrono::DateTime<chrono::Utc>>,
     recharge_log: RechargeLog,
 }
 
@@ -28,7 +29,8 @@ pub async fn recharge_handler(
         Ok((user, recharge_log)) => {
             HttpResponse::Ok().json(RechargeResponse {
                 message: "Recharge successful".to_string(),
-                user,
+                vip_level: user.vip_level,
+                vip_expires_at: user.vip_expires_at,
                 recharge_log,
             })
         }

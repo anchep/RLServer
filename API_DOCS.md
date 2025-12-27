@@ -249,8 +249,17 @@
 ```json
 {
   "message": "Recharge successful",
-  "new_vip_level": 1,
-  "new_vip_expires_at": "2025-12-23T14:47:52Z"
+  "vip_level": 1,
+  "vip_expires_at": "2025-12-23T14:47:52Z",
+  "recharge_log": {
+    "id": 1,
+    "user_id": 1,
+    "card_code": "string",
+    "vip_level": 1,
+    "duration_days": 30,
+    "recharge_time": "2025-12-23T14:47:52Z",
+    "created_at": "2025-12-23T14:47:52Z"
+  }
 }
 ```
 

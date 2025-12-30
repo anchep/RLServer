@@ -6,6 +6,7 @@ use crate::services::auth::*;
 use crate::database::Pool;
 use crate::config::Config;
 use crate::errors::AppError;
+use crate::utils::ip::get_client_ip;
 
 #[derive(Debug, Serialize)]
 struct RegisterResponse {
@@ -59,10 +60,9 @@ pub async fn login_handler(
     }
     
     // 获取客户端IP
-    let conn_info = req_addr.connection_info();
-    let ip = conn_info.realip_remote_addr().unwrap_or("0.0.0.0");
+    let ip = get_client_ip(&req_addr).unwrap_or("0.0.0.0".to_string());
     
-    match login_user(&pool, req.into_inner(), ip, &config).await {
+    match login_user(&pool, req.into_inner(), &ip, &config).await {
         Ok((user, token)) => {
             HttpResponse::Ok().json(LoginResponse {
                 message: "Login successful".to_string(),

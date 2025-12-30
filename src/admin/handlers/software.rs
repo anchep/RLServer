@@ -5,6 +5,7 @@ use tera::{Tera, Context};
 use crate::admin::services::software::*;
 use crate::admin::services::admin_user::log_admin_operation;
 use crate::errors::ServiceError;
+use crate::utils::ip::get_client_ip;
 
 // 软件列表页面GET请求处理器
 pub async fn list_get(
@@ -109,7 +110,7 @@ pub async fn add_post(
             let session = req.get_session();
             if let Ok(Some(admin_id)) = session.get::<i32>("admin_id") {
                 // 记录操作日志
-                let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+                let ip = get_client_ip(&req);
                 let _ = log_admin_operation(&pool, admin_id, "create_software", Some(&format!("创建软件: {}", name)), ip);
             }
             
@@ -232,7 +233,7 @@ pub async fn edit_post(
             let session = req.get_session();
             if let Ok(Some(admin_id)) = session.get::<i32>("admin_id") {
                 // 记录操作日志
-                let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+                let ip = get_client_ip(&req);
                 let _ = log_admin_operation(&pool, admin_id, "update_software", Some(&format!("更新软件: {}", name)), ip);
             }
             
@@ -298,7 +299,7 @@ pub async fn delete_post(
             let session = req.get_session();
             if let Ok(Some(admin_id)) = session.get::<i32>("admin_id") {
                 // 记录操作日志
-                let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+                let ip = get_client_ip(&req);
                 let _ = log_admin_operation(&pool, admin_id, "delete_software", Some(&format!("删除软件ID: {}", id)), ip);
             }
             
@@ -332,7 +333,7 @@ pub async fn toggle_post(
             if let Ok(Some(admin_id)) = session.get::<i32>("admin_id") {
                 let status_text = if software.status { "启用" } else { "禁用" };
                 // 获取客户端IP地址
-                let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+                let ip = get_client_ip(&req);
                 // 记录操作日志
                 let _ = log_admin_operation(&pool, admin_id, "toggle_software_status", Some(&format!("{}软件: {}", status_text, software.name)), ip);
             }

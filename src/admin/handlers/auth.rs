@@ -8,6 +8,7 @@ use crate::errors::ServiceError;
 use crate::schema::admin_users::dsl::admin_users;
 use crate::database::models::AdminUser;
 use crate::utils::email::generate_verification_code;
+use crate::utils::ip::get_client_ip;
 
 
 // 登录页面GET请求处理器
@@ -74,7 +75,8 @@ pub async fn login_post(
             }
             
             // 获取客户端IP地址
-            let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+            // 从请求头中提取真实客户端IP
+            let ip = get_client_ip(&req);
             // 记录操作日志
             let _ = log_admin_operation(&pool, user.id, "login", Some(&format!("管理员 {} 登录成功", username)), ip);
             
@@ -143,7 +145,7 @@ pub async fn register_post(
     match create_admin_user(&pool, username, password, email, false) {
         Ok(_) => {
             // 记录操作日志
-            let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+            let ip = get_client_ip(&req);
             let _ = log_admin_operation(&pool, 0, "register", Some(&format!("新管理员 {} 注册成功", username)), ip);
             
             // 重定向到登录页面
@@ -576,7 +578,7 @@ pub async fn change_password_post(
                 match update_admin_user(&pool, admin_id, None, Some(new_password)) {
                     Ok(_) => {
                         // 记录操作日志
-                        let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+                        let ip = get_client_ip(&req);
                         let _ = log_admin_operation(&pool, admin_id, "change_password", Some(&format!("管理员 {} 修改密码成功", user.username)), ip);
                         
                         // 重定向到个人中心页面
@@ -627,7 +629,7 @@ pub async fn change_email_post(
                 match update_admin_user(&pool, admin_id, Some(email), None) {
                     Ok(_) => {
                         // 记录操作日志
-                        let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+                        let ip = get_client_ip(&req);
                         let _ = log_admin_operation(&pool, admin_id, "change_email", Some(&format!("管理员 {} 修改邮箱成功", user.username)), ip);
                         
                         // 重定向到个人中心页面

@@ -12,6 +12,7 @@ use crate::admin::services::admin_user::log_admin_operation;
 use crate::database::models::User;
 use crate::errors::ServiceError;
 use crate::config::Config;
+use crate::utils::ip::get_client_ip;
 
 // 用户列表页面
 pub async fn user_list(
@@ -177,9 +178,22 @@ pub async fn user_save_vip(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     web::Form(form): web::Form<serde_json::Value>,
 ) -> impl Responder {
-    let user_id = form.get("user_id").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-    let vip_level = form.get("vip_level").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-    let expires_days = form.get("expires_days").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+    // 从表单获取数据并正确转换类型
+    let user_id = form.get("user_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| s.parse::<i32>().ok())
+        .unwrap_or(0);
+        
+    let vip_level = form.get("vip_level")
+        .and_then(|v| v.as_str())
+        .and_then(|s| s.parse::<i32>().ok())
+        .unwrap_or(0);
+        
+    let expires_days = form.get("expires_days")
+        .and_then(|v| v.as_str())
+        .and_then(|s| s.parse::<i32>().ok())
+        .unwrap_or(0);
+        
     let note = form.get("note").and_then(|v| v.as_str());
     
     // 计算到期时间
@@ -194,7 +208,7 @@ pub async fn user_save_vip(
         Ok(updated_user) => {
             // 记录管理员操作日志
             if let Some(admin_id) = req.extensions().get::<i32>() {
-                let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+                let ip = get_client_ip(&req);
                 let _ = log_admin_operation(
                     &pool,
                     *admin_id,
@@ -204,13 +218,25 @@ pub async fn user_save_vip(
                 );
             }
             
-            // 重定向到用户列表页面
-            HttpResponse::Found()
-                .append_header(("Location", "/admin/users"))
-                .finish()
+            // 返回JSON成功响应
+            HttpResponse::Ok()
+                .content_type("application/json")
+                .json(serde_json::json!({
+                    "success": true,
+                    "message": "更新用户VIP信息成功"
+                }))
         },
-        Err(_) => {
-            HttpResponse::InternalServerError().body("更新用户VIP信息失败")
+        Err(err) => {
+            // 输出错误信息到日志
+            eprintln!("更新用户VIP信息失败: {:#?}", err);
+            
+            // 返回JSON错误响应
+            HttpResponse::Ok()
+                .content_type("application/json")
+                .json(serde_json::json!({
+                    "success": false,
+                    "message": "更新用户VIP信息失败"
+                }))
         }
     }
 }
@@ -228,7 +254,7 @@ pub async fn user_toggle_status(
         Ok(_) => {
             // 记录管理员操作日志
             if let Some(admin_id) = req.extensions().get::<i32>() {
-                let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+                let ip = get_client_ip(&req);
                 let _ = log_admin_operation(
                     &pool,
                     *admin_id,
@@ -560,7 +586,7 @@ pub async fn user_add_post(
         Ok(_) => {
             // 记录管理员操作日志
             if let Some(admin_id) = req.extensions().get::<i32>() {
-                let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+                let ip = get_client_ip(&req);
                 let _ = log_admin_operation(
                     &pool,
                     *admin_id,

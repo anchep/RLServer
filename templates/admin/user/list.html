@@ -358,6 +358,9 @@
                                     <th>VIP到期时间</th>
                                     <th>状态</th>
                                     <th>注册时间</th>
+                                    <th>登录时间</th>
+                                    <th>登录IP</th>
+                                    <th>登录硬件</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
@@ -389,6 +392,27 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ user.created_at | format_date }}</td>
+                                    <td>
+                                        {% if user.last_login_at %}
+                                        {{ user.last_login_at | format_date }}
+                                        {% else %}
+                                        - 未登录 -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.last_login_ip %}
+                                        {{ user.last_login_ip }}
+                                        {% else %}
+                                        - 未登录 -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.last_login_hardware %}
+                                        {{ user.last_login_hardware }}
+                                        {% else %}
+                                        - 未登录 -
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         <button type="button" class="btn btn-sm btn-primary me-1 edit-user-btn" data-user-id="{{ user.id }}"><i class="mdi mdi-pencil"></i> 编辑</button>
                                         <form method="post" action="/admin/dashboard/users/toggle-status/{{ user.id }}/{% if user.status %}false{% else %}true{% endif %}" class="d-inline">

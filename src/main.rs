@@ -129,8 +129,8 @@ async fn main() -> std::io::Result<()> {
     
     // 配置API速率限制
     let governor_config = GovernorConfigBuilder::default()
-        .per_second(30)
-        .burst_size(60)
+        .per_second(60)
+        .burst_size(120)
         .finish()
         .unwrap();
     

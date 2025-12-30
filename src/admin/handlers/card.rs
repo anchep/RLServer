@@ -6,6 +6,7 @@ use tera::{Tera, Context};
 use crate::admin::services::card::*;
 use crate::admin::services::admin_user::log_admin_operation;
 use crate::errors::ServiceError;
+use crate::utils::ip::get_client_ip;
 
 // 卡密列表页面GET请求处理器
 pub async fn list_get(
@@ -159,7 +160,7 @@ pub async fn generate_post(
     match generate_recharge_cards(&pool, 0, vip_level, duration, price, quantity) {
         Ok(generated_cards) => {
             // 记录操作日志
-            let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+            let ip = get_client_ip(&req);
             let _ = log_admin_operation(&pool, admin_id, "generate_cards", Some(&format!("生成卡密 {} 张，VIP等级：{}，时长：{}天，售价：¥{}", quantity, vip_level, duration, price)), ip);
             
             let mut context = Context::new();
@@ -285,7 +286,7 @@ pub async fn update_price_post(
     match update_card_price(&pool, card_id, price) {
         Ok(updated_card) => {
             // 记录操作日志
-            let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+            let ip = get_client_ip(&req);
             let _ = log_admin_operation(&pool, admin_id, "update_card_price", Some(&format!("更新卡密ID {} 售价为：¥{}", card_id, price)), ip);
             
             // 重定向到卡密详情页面
@@ -324,7 +325,7 @@ pub async fn delete_post(
     match delete_recharge_card(&pool, card_id) {
         Ok(_) => {
             // 记录操作日志
-            let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+            let ip = get_client_ip(&req);
             let _ = log_admin_operation(&pool, admin_id, "delete_card", Some(&format!("删除卡密ID：{}", card_id)), ip);
             
             // 重定向到卡密列表页面
@@ -431,7 +432,7 @@ pub async fn batch_delete_post(
     match batch_delete_recharge_cards(&pool, &card_ids) {
         Ok(deleted_count) => {
             // 记录操作日志
-            let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+            let ip = get_client_ip(&req);
             let _ = log_admin_operation(&pool, admin_id, "batch_delete_cards", Some(&format!("批量删除卡密 {} 张", deleted_count)), ip);
             
             // 重定向到卡密列表页面

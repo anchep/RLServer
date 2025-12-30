@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}软件列表 - 后台管理系统{% endblock %}
+
+{% block page_title %}软件列表{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面操作栏 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h4">软件管理</h2>
+                <a href="/admin/dashboard/software/add" class="btn btn-primary">
+                    <i class="bi bi-plus"></i> 添加软件
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 筛选和搜索 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" action="/admin/dashboard/software/" class="d-flex flex-wrap gap-2">
+                        <div class="flex-grow-1">
+                            <input type="text" class="form-control" name="search" placeholder="搜索软件名称或中文名称">
+                        </div>
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="bi bi-search"></i> 搜索
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
+                            <i class="bi bi-arrow-repeat"></i> 重置
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 消息提示 -->
+    {% if error %}
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- 软件列表表格 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>软件名称</th>
+                                    <th>中文名称</th>
+                                    <th>可执行文件</th>
+                                    <th>VIP等级要求</th>
+                                    <th>需要管理员权限</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if software_list | length == 0 %}
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted">
+                                        <i class="bi bi-info-circle"></i> 暂无软件数据
+                                    </td>
+                                </tr>
+                                {% else %}
+                                {% for software in software_list %}
+                                <tr>
+                                    <td>{{ software.id }}</td>
+                                    <td>{{ software.name }}</td>
+                                    <td>{{ software.chinese_name }}</td>
+                                    <td>{{ software.executable_name }}</td>
+                                    <td>{{ software.required_vip_level }}</td>
+                                    <td>
+                                        {% if software.requires_admin %}
+                                        <span class="badge bg-success">是</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">否</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if software.status %}
+                                        <span class="badge bg-success">启用</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">禁用</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ software.created_at | format_date }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <!-- 查看详情按钮 -->
+                                            <a href="#" class="btn btn-sm btn-info me-1" title="查看详情" data-bs-toggle="modal" data-bs-target="#softwareModal" onclick="loadSoftwareDetails({{ software.id }})">
+                                                <i class="bi bi-eye"></i> 详情
+                                            </a>
+                                            
+                                            <!-- 编辑按钮 -->
+                                            <a href="/admin/dashboard/software/edit/{{ software.id }}" class="btn btn-sm btn-primary me-1" title="编辑">
+                                                <i class="bi bi-pencil"></i> 编辑
+                                            </a>
+                                            
+                                            <!-- 状态切换按钮 -->
+                                            <form method="post" action="/admin/dashboard/software/toggle/{{ software.id }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm {% if software.status %}btn-warning{% else %}btn-success{% endif %} btn-toggle-status me-1" title="{% if software.status %}禁用{% else %}启用{% endif %}" data-current-status="{{ software.status }}">
+                                                    <i class="bi {% if software.status %}bi-pause{% else %}bi-play{% endif %}"></i> {% if software.status %}禁用{% else %}启用{% endif %}
+                                                </button>
+                                            </form>
+                                            
+                                            <!-- 删除按钮 -->
+                                            <form method="post" action="/admin/dashboard/software/delete/{{ software.id }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-danger btn-delete" title="删除">
+                                                    <i class="bi bi-trash"></i> 删除
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 软件详情模态框 -->
+<div class="modal fade" id="softwareModal" tabindex="-1" aria-labelledby="softwareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="softwareModalLabel">软件详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="softwareDetails">
+                    <!-- 软件详情将通过JavaScript动态加载 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // 格式化日期函数
+    function formatDate(timestamp) {
+        const date = new Date(timestamp * 1000);
+        return date.toLocaleString('zh-CN');
+    }
+    
+    // 重置筛选条件
+    function resetFilters() {
+        window.location.href = '/admin/dashboard/software/';
+    }
+    
+    // 加载软件详情
+    function loadSoftwareDetails(softwareId) {
+        // 这里可以通过AJAX加载软件详情
+        console.log('加载软件详情:', softwareId);
+        const softwareDetails = document.getElementById('softwareDetails');
+        softwareDetails.innerHTML = '<p class="text-center">加载中...</p>';
+    }
+</script>
+{% endblock %}
+{% endblock %}

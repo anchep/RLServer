@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}测试页面 - 后台管理系统{% endblock %}
+
+{% block page_title %}测试页面{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1>测试页面</h1>
+    <p>这是一个测试页面，用于调试模板渲染问题。</p>
+    
+    {% if card_list %}
+    <h2>卡密列表</h2>
+    <p>卡密数量: {{ card_list | length }}</p>
+    {% else %}
+    <p>没有卡密数据</p>
+    {% endif %}
+</div>
+{% endblock %}

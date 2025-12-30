@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}生成卡密 - 后台管理系统{% endblock %}
+
+{% block page_title %}生成卡密{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1>生成卡密</h1>
+    <p>这是一个简化版的生成卡密页面。</p>
+    
+    <form method="post" action="/admin/dashboard/cards/generate/">
+        <div class="mb-3">
+            <label for="card_type" class="form-label">卡密类型</label>
+            <select class="form-select" id="card_type" name="card_type">
+                <option value="1">VIP卡</option>
+                <option value="2">时长卡</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="duration" class="form-label">时长（天）</label>
+            <input type="number" class="form-control" id="duration" name="duration" value="30">
+        </div>
+        <div class="mb-3">
+            <label for="price" class="form-label">售价</label>
+            <input type="number" class="form-control" id="price" name="price" value="0.0">
+        </div>
+        <div class="mb-3">
+            <label for="quantity" class="form-label">生成数量</label>
+            <input type="number" class="form-control" id="quantity" name="quantity" value="10">
+        </div>
+        <button type="submit" class="btn btn-primary">生成卡密</button>
+    </form>
+</div>
+{% endblock %}

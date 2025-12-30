@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}黑名单管理{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0 font-size-18">黑名单管理</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="javascript: void(0);">用户管理</a></li>
+                        <li class="breadcrumb-item active">黑名单管理</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 操作按钮 -->
+    <div class="row mb-4">
+        <div class="col-sm-12">
+            <a href="/admin/dashboard/users/blacklist/add" class="btn btn-primary waves-effect waves-light">
+                <i class="mdi mdi-plus-circle mr-2"></i> 添加到黑名单
+            </a>
+        </div>
+    </div>
+    
+    <!-- 数据表格 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-centered table-nowrap table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>用户名</th>
+                                    <th>硬件码</th>
+                                    <th>IP地址</th>
+                                    <th>添加时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in blacklist %}
+                                <tr>
+                                    <td>{{ entry.id }}</td>
+                                    <td>{% if entry.username %}{{ entry.username }}{% else %}未设置{% endif %}</td>
+                                    <td>{% if entry.hardware_code %}{{ entry.hardware_code }}{% else %}未设置{% endif %}</td>
+                                    <td>{% if entry.ip_address %}{{ entry.ip_address }}{% else %}未设置{% endif %}</td>
+                                    <td>{{ entry.created_at }}</td>
+                                    <td>
+                                        <form method="post" action="/admin/dashboard/users/blacklist/remove/{{ entry.id }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-danger btn-sm waves-effect waves-light" onclick="return confirm('确定要从黑名单中移除吗？');">
+                                                <i class="mdi mdi-delete-outline mr-1"></i> 移除
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 分页 -->
+                    {% if total_pages > 1 %}
+                    <div class="row">
+                        <div class="col-sm-12 col-md-5">
+                            <div class="dataTables_info" id="datatable_info" role="status" aria-live="polite">
+                                显示 {{ (page - 1) * page_size + 1 }} 到 {% if page * page_size < total %}{{ page * page_size }}{% else %}{{ total }}{% endif %} 条，共 {{ total }} 条记录
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-7">
+                            <div class="dataTables_paginate paging_simple_numbers" id="datatable_paginate">
+                                <ul class="pagination justify-content-end">
+                                    <li class="paginate_button page-item {% if page == 1 %}disabled{% endif %}">
+                                        <a href="/admin/dashboard/users/blacklist?page=1" class="page-link">首页</a>
+                                    </li>
+                                    <li class="paginate_button page-item {% if page == 1 %}disabled{% endif %}">
+                                        <a href="/admin/dashboard/users/blacklist?page={{ page-1 }}" class="page-link">上一页</a>
+                                    </li>
+                                    <li class="paginate_button page-item active">
+                                        <a href="#" class="page-link">{{ page }}</a>
+                                    </li>
+                                    <li class="paginate_button page-item {% if page >= total_pages %}disabled{% endif %}">
+                                        <a href="/admin/dashboard/users/blacklist?page={{ page+1 }}" class="page-link">下一页</a>
+                                    </li>
+                                    <li class="paginate_button page-item {% if page >= total_pages %}disabled{% endif %}">
+                                        <a href="/admin/dashboard/users/blacklist?page={{ total_pages }}" class="page-link">末页</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -34,18 +34,4 @@ pub fn init_logger() -> Result<(), fern::InitError> {
     Ok(())
 }
 
-pub fn info_log(message: &str) {
-    info!("{}", message);
-}
 
-pub fn warn_log(message: &str) {
-    warn!("{}", message);
-}
-
-pub fn error_log(message: &str) {
-    error!("{}", message);
-}
-
-pub fn debug_log(message: &str) {
-    debug!("{}", message);
-}

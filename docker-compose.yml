@@ -1,55 +1,85 @@
 services:
   db:
-    image: postgres:15
-    restart: always
+    image: postgres:18.1
+    restart: unless-stopped
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
       POSTGRES_DB: rl_server
+      POSTGRES_INITDB_ARGS: --encoding=UTF8
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    # 临时暴露端口用于调试，调试完成后应移除
+      - postgres_data:/var/lib/postgresql
+      - ./migrations:/docker-entrypoint-initdb.d/migrations:ro
+    # 仅在开发环境暴露端口用于调试
     ports:
       - "5432:5432"
     expose:
       - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d rl_server"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
   
   app:
     image: rlserver-app:latest
     build:
       context: .
       dockerfile: Dockerfile
-    restart: always
+    restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_started
     env_file:
       - .env
-    # 仅在内部暴露端口，不对外暴露
+    volumes:
+      # 开发环境挂载模板文件和静态资源，方便修改
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
     expose:
       - "28001"
-    volumes:
-      # 挂载target目录，用于在本地编译代码后替换容器中的二进制文件
-      - ./target:/app/target
-      # 挂载.env文件
-      - ./.env:/app/.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
   
   nginx:
-    image: nginx:latest
-    restart: always
+    image: nginx:1.29.4
+    restart: unless-stopped
     depends_on:
-      - app
+      - db
     ports:
       - "28001:80"
       - "28043:443"
     volumes:
       # SSL证书卷（手动配置）
-      # 证书文件：fullchain.pem（证书文件）和 privkey.pem（私钥文件）
-      - ./ssl:/etc/nginx/ssl
+      - ./ssl:/etc/nginx/ssl:ro
       # Nginx配置文件
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # 静态文件目录，可选择挂载
+      - ./static:/var/www/static:ro
     environment:
       - NGINX_HOST=localhost
       - NGINX_PORT=443
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:
+    driver: local

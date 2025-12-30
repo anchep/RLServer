@@ -1,7 +1,7 @@
 use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error, HttpMessage, web};
 use actix_web::middleware::Next;
 use actix_web::body::BoxBody;
-use crate::utils::jwt::verify_token;
+use crate::utils::jwt::verify_access_token;
 use crate::config::Config;
 
 // 认证中间件
@@ -28,7 +28,7 @@ pub async fn auth_middleware(
                 let token = auth_str.trim_start_matches("Bearer ");
                 
                 // 验证token
-                match verify_token(token, config) {
+                match verify_access_token(token, config) {
                     Ok(claims) => {
                         // 将用户ID存储到请求扩展中
                         let user_id = claims.sub.parse::<i32>().unwrap_or(0);

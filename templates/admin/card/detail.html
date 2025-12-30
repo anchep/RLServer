@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}卡密详情 - 后台管理系统{% endblock %}
+
+{% block page_title %}卡密详情{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面导航 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/">仪表板</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/cards/">卡密管理</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">卡密详情</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- 消息提示 -->
+    {% if error %}
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- 卡密详情卡片 -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">卡密基本信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">卡密ID</label>
+                                <div class="form-control-plaintext">{{ card.id }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">卡密代码</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ card.card_code }}" readonly>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="copyCardCode('{{ card.card_code }}')" title="复制卡密">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">VIP等级</label>
+                                <div class="form-control-plaintext">
+                                    <span class="badge bg-primary">VIP{{ card.vip_level }}</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">时长（天）</label>
+                                <div class="form-control-plaintext">{{ card.duration_days }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">售价</label>
+                                <div class="form-control-plaintext">¥{{ card.price }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">状态</label>
+                                <div class="form-control-plaintext">
+                                    {% if card.is_used %}
+                                    <span class="badge bg-danger">已使用</span>
+                                    {% else %}
+                                    <span class="badge bg-success">未使用</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">创建时间</label>
+                                <div class="form-control-plaintext">{{ card.created_at | format_date }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">创建人ID</label>
+                                <div class="form-control-plaintext">系统</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 更新售价卡片 -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">更新售价</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="/admin/dashboard/cards/update-price/{{ card.id }}" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="price" class="form-label">新售价 <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">¥</span>
+                                <input type="number" class="form-control" id="price" name="price" value="{{ card.price }}" required min="0" step="1" placeholder="请输入新售价">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2 align-items-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> 保存更改
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 操作卡片 -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">操作</h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/admin/dashboard/cards/" class="btn btn-outline-secondary">
+                            <i class="bi bi-list"></i> 返回卡密列表
+                        </a>
+                        <a href="/admin/dashboard/cards/generate" class="btn btn-outline-primary">
+                            <i class="bi bi-plus"></i> 生成新卡密
+                        </a>
+                        <hr>
+                        <form method="post" action="/admin/dashboard/cards/delete/{{ card.id }}" class="d-grid">
+                            <button type="submit" class="btn btn-danger btn-delete">
+                                <i class="bi bi-trash"></i> 删除此卡密
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 卡密日志 -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">卡密日志</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <i class="bi bi-plus-circle text-success"></i> 卡密于 {{ card.created_at | format_date }} 创建
+                        </li>
+                        {% if card.used_at %}
+                        <li class="list-group-item">
+                            <i class="bi bi-check-circle text-info"></i> 卡密于 {{ card.used_at | format_date }} 被使用
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // 格式化日期函数
+    function formatDate(timestamp) {
+        const date = new Date(timestamp * 1000);
+        return date.toLocaleString('zh-CN');
+    }
+    
+    // 复制卡密
+    function copyCardCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            showMessage('卡密已复制到剪贴板', 'success');
+        }).catch(err => {
+            console.error('复制失败:', err);
+            showMessage('复制失败，请手动复制', 'danger');
+        });
+    }
+    
+    // 显示消息提示
+    function showMessage(message, type = 'info', duration = 3000) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `alert alert-${type} alert-dismissible fade show`;
+        messageElement.role = 'alert';
+        messageElement.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const content = document.querySelector('.content');
+        if (content) {
+            content.insertBefore(messageElement, content.firstChild);
+            
+            setTimeout(() => {
+                messageElement.classList.remove('show');
+                setTimeout(() => {
+                    messageElement.remove();
+                }, 150);
+            }, duration);
+        }
+    }
+</script>
+{% endblock %}
+{% endblock %}

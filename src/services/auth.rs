@@ -64,6 +64,8 @@ pub async fn register_user(pool: &Pool, req: RegisterRequest, config: &Config) -
             users::last_login_at.eq(Utc::now()),
             users::created_at.eq(Utc::now()),
             users::updated_at.eq(Utc::now()),
+            users::note.eq(""),
+            users::status.eq(true),
         ))
         .get_result::<User>(&mut conn)?;
     
@@ -182,26 +184,6 @@ pub async fn logout_user(pool: &Pool, session_token: &str) -> Result<()> {
         .execute(&mut conn)?;
     
     Ok(())
-}
-
-pub async fn get_user_by_id(pool: &Pool, user_id: i32) -> Result<User> {
-    let mut conn = pool.get()?;
-    
-    let user = users::table
-        .find(user_id)
-        .first::<User>(&mut conn)?;
-    
-    Ok(user)
-}
-
-pub async fn get_online_user_by_token(pool: &Pool, session_token: &str) -> Result<OnlineUser> {
-    let mut conn = pool.get()?;
-    
-    let online_user = online_users::table
-        .filter(online_users::session_token.eq(session_token))
-        .first::<OnlineUser>(&mut conn)?;
-    
-    Ok(online_user)
 }
 
 /// 刷新访问令牌

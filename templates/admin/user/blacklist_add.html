@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}添加到黑名单{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0 font-size-18">添加到黑名单</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="javascript: void(0);">用户管理</a></li>
+                        <li class="breadcrumb-item"><a href="/admin/dashboard/users/blacklist">黑名单管理</a></li>
+                        <li class="breadcrumb-item active">添加到黑名单</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加表单 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" action="/admin/dashboard/users/blacklist/add">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="username">用户名</label>
+                                    <input type="text" class="form-control" id="username" name="username" placeholder="可选择输入用户名">
+                                    <small class="form-text text-muted">可选择输入用户名，用于禁止特定用户登录</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="hardware_code">硬件码</label>
+                                    <input type="text" class="form-control" id="hardware_code" name="hardware_code" placeholder="可选择输入硬件码">
+                                    <small class="form-text text-muted">可选择输入硬件码，用于禁止特定设备登录</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="ip_address">IP地址</label>
+                                    <input type="text" class="form-control" id="ip_address" name="ip_address" placeholder="可选择输入IP地址">
+                                    <small class="form-text text-muted">可选择输入IP地址，用于禁止特定IP登录</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="alert alert-info" role="alert">
+                                    <strong>提示：</strong> 至少需要填写其中一项信息（用户名、硬件码或IP地址）
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-primary waves-effect waves-light">
+                                    <i class="mdi mdi-check-circle mr-2"></i> 确定添加
+                                </button>
+                                <a href="/admin/dashboard/users/blacklist" class="btn btn-secondary waves-effect waves-light ml-2">
+                                    <i class="mdi mdi-arrow-left mr-2"></i> 返回列表
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

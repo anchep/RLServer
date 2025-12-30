@@ -63,16 +63,6 @@ pub fn verify_refresh_token(token: &str, config: &Config) -> Result<Claims> {
     Ok(decoded.claims)
 }
 
-/// 生成JWT令牌（保留旧函数，用于兼容）
-pub fn generate_token(user_id: i32, username: &str, config: &Config) -> Result<String> {
-    generate_access_token(user_id, username, config)
-}
-
-/// 验证JWT令牌（保留旧函数，用于兼容）
-pub fn verify_token(token: &str, config: &Config) -> Result<Claims> {
-    verify_access_token(token, config)
-}
-
 /// 生成密码重置令牌
 pub fn generate_reset_token(user_id: i32, email: &str, config: &Config) -> Result<String> {
     let expiration = Utc::now() + Duration::hours(1); // 重置令牌有效期1小时
@@ -85,20 +75,6 @@ pub fn generate_reset_token(user_id: i32, email: &str, config: &Config) -> Resul
     
     let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(config.jwt_secret.as_bytes()))?;
     Ok(token)
-}
-
-/// 验证密码重置令牌
-pub fn verify_reset_token(token: &str, config: &Config) -> Result<Claims> {
-    let mut validation = Validation::default();
-    validation.validate_exp = true;
-    
-    let decoded = decode::<Claims>(token, &DecodingKey::from_secret(config.jwt_secret.as_bytes()), &validation)?;
-    
-    if decoded.claims.token_type != "reset" {
-        return Err(AppError::Unauthorized("Invalid token type".to_string()));
-    }
-    
-    Ok(decoded.claims)
 }
 
 /// 生成激活令牌

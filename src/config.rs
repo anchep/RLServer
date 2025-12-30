@@ -8,9 +8,11 @@ fn convert_newlines(input: String) -> String {
 }
 
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct Config {
     pub database_url: String,
     pub jwt_secret: String,
+    #[allow(dead_code)]
     pub heartbeat_interval: Duration,
     pub cleanup_interval: Duration,
     pub server_port: u16,
@@ -25,7 +27,9 @@ pub struct Config {
     pub smtp_username: String,
     pub smtp_password: String,
     pub smtp_from_email: String,
+    #[allow(dead_code)]
     pub smtp_ssl: bool,
+    #[allow(dead_code)]
     pub smtp_timeout: Duration,
     // 邮件模板配置
     pub email_verification_subject: String,

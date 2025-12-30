@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单测试页面</title>
+</head>
+<body>
+    <h1>简单测试页面</h1>
+    <p>这是一个不继承任何模板的简单测试页面。</p>
+    
+    <h2>上下文变量测试</h2>
+    <ul>
+        <li>page: {{ page }}</li>
+        <li>page_size: {{ page_size }}</li>
+        <li>total: {{ total }}</li>
+        <li>total_pages: {{ total_pages }}</li>
+    </ul>
+    
+    <h2>卡密列表测试</h2>
+    {% if card_list %}
+    <p>卡密数量: {{ card_list | length }}</p>
+    {% for card in card_list %}
+        <p>卡密: {{ card.card_code }} - 状态: {{ card.is_used }}</p>
+    {% endfor %}
+    {% else %}
+    <p>没有卡密数据</p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}仪表板 - 后台管理系统{% endblock %}
+
+{% block page_title %}仪表板{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 统计卡片 -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">总软件数</h5>
+                    <h2 class="card-text">{{ stats.total_software }}</h2>
+                    <p class="card-text text-muted">已上架软件</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">总卡密数</h5>
+                    <h2 class="card-text">{{ stats.total_cards }}</h2>
+                    <p class="card-text text-muted">已生成卡密</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">活跃用户数</h5>
+                    <h2 class="card-text">{{ stats.active_users }}</h2>
+                    <p class="card-text text-muted">VIP用户</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">今日销售</h5>
+                    <h2 class="card-text">¥{{ stats.today_sales }}</h2>
+                    <p class="card-text text-muted">今日销售业绩</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 最近活动 -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">最近充值记录</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_recharges %}    
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>用户ID</th>
+                                    <th>卡密</th>
+                                    <th>充值时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for recharge in recent_recharges %}
+                                <tr>
+                                    <td>{{ recharge.user_id }}</td>
+                                    <td>{{ recharge.card_code }}</td>
+                                    <td>{{ recharge.created_at }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">暂无充值记录</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">最近登录记录</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_logins %}    
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>管理员</th>
+                                    <th>登录时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for login in recent_logins %}
+                                <tr>
+                                    <td>{{ login.username }}</td>
+                                    <td>{{ login.last_login_at }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">暂无登录记录</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

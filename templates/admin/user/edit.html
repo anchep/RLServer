@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}编辑用户 - 后台管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- 页面标题 -->
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">编辑用户</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/admin/dashboard/">后台管理</a></li>
+                        <li class="breadcrumb-item"><a href="/admin/dashboard/users">用户管理</a></li>
+                        <li class="breadcrumb-item active">编辑用户</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- 用户基本信息 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="card-title">用户基本信息</h5>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="username" class="form-label">用户名</label>
+                                        <input type="text" class="form-control" id="username" value="{{ user.username }}" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="email" class="form-label">邮箱</label>
+                                        <input type="email" class="form-control" id="email" value="{{ user.email }}" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="status" class="form-label">状态</label>
+                                        <input type="text" class="form-control" id="status" value="{% if user.status %}启用{% else %}禁用{% endif %}" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="created_at" class="form-label">注册时间</label>
+                                        <input type="text" class="form-control" id="created_at" value="{{ user.created_at | format_date }}" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIP设置表单 -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="card-title">VIP设置</h5>
+                            <form method="post" action="/admin/dashboard/users/save-vip" class="row g-3">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="vip_level" class="form-label">VIP等级 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="vip_level" name="vip_level" required>
+                                            <option value="0" {% if user.vip_level == 0 %}selected{% endif %}>普通用户</option>
+                                            <option value="1" {% if user.vip_level == 1 %}selected{% endif %}>VIP 1</option>
+                                            <option value="2" {% if user.vip_level == 2 %}selected{% endif %}>VIP 2</option>
+                                            <option value="3" {% if user.vip_level == 3 %}selected{% endif %}>VIP 3</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="expires_days" class="form-label">有效期（天）</label>
+                                        <input type="number" class="form-control" id="expires_days" name="expires_days" min="0" value="0" placeholder="0表示永久">
+                                        <small class="form-text text-muted">0表示永久有效</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="current_expires" class="form-label">当前到期时间</label>
+                                        <input type="text" class="form-control" id="current_expires" value="{% if user.vip_expires_at %}{{ user.vip_expires_at | format_date }}{% else %}永久{% endif %}" readonly>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="note" class="form-label">备注</label>
+                                        <textarea class="form-control" id="note" name="note" rows="3" placeholder="请输入备注信息">{{ user.note }}</textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn-primary">保存设置</button>
+                                        <a href="/admin/dashboard/users" class="btn btn-secondary ms-2">取消</a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

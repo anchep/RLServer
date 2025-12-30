@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}综合统计 - 后台管理系统{% endblock %}
+
+{% block page_title %}综合统计{% endblock %}
+
+{% block styles %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 统计卡片 -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3>总用户数</h3>
+                <p class="h4 mt-2">{{ overview_stats.total_users }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3>总软件数</h3>
+                <p class="h4 mt-2">{{ overview_stats.total_software }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3>总卡密数</h3>
+                <p class="h4 mt-2">{{ overview_stats.total_cards }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3>已使用卡密数</h3>
+                <p class="h4 mt-2">{{ overview_stats.used_cards }}</p>
+            </div>
+        </div>
+        <div class="col-md-3 mt-4">
+            <div class="card text-center p-3">
+                <h3>总销售金额</h3>
+                <p class="h4 mt-2">¥{{ overview_stats.total_sales }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 导航选项卡 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/admin/dashboard/stats/overview">综合统计</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/dashboard/stats/sales">销售业绩</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/dashboard/stats/users">用户统计</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/dashboard/stats/cards">卡密统计</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 图表区域 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">系统概览</h3>
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="overviewChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 初始化综合统计图表
+    const overviewCtx = document.getElementById('overviewChart').getContext('2d');
+    const overviewChart = new Chart(overviewCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['总用户数', '总软件数', '总卡密数', '已使用卡密数'],
+            datasets: [{
+                label: '系统概览',
+                data: [{{ overview_stats.total_users }}, {{ overview_stats.total_software }}, {{ overview_stats.total_cards }}, {{ overview_stats.used_cards }}],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0'
+                ],
+                borderColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

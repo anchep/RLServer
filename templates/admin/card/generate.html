@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}生成卡密 - 后台管理系统{% endblock %}
+
+{% block page_title %}生成卡密{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面导航 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/">仪表板</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/cards/">卡密管理</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">生成卡密</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- 表单卡片 -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">生成新卡密</h3>
+                </div>
+                <div class="card-body">
+                    <!-- 错误提示 -->
+                    {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- 生成卡密表单 -->
+                    <form method="post" action="/admin/dashboard/cards/generate/" class="row g-3">
+                        <!-- VIP等级 -->
+                        <div class="col-md-6">
+                            <label for="vip_level" class="form-label">VIP等级 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="vip_level" name="vip_level" required>
+                                <option value="">请选择VIP等级</option>
+                                <option value="0" {% if vip_level == 0 %}selected{% endif %}>VIP 0</option>
+                                <option value="1" {% if vip_level == 1 %}selected{% endif %}>VIP 1</option>
+                                <option value="2" {% if vip_level == 2 %}selected{% endif %}>VIP 2</option>
+                                <option value="3" {% if vip_level == 3 %}selected{% endif %}>VIP 3</option>
+                                <option value="4" {% if vip_level == 4 %}selected{% endif %}>VIP 4</option>
+                                <option value="5" {% if vip_level == 5 %}selected{% endif %}>VIP 5</option>
+                                <option value="6" {% if vip_level == 6 %}selected{% endif %}>VIP 6</option>
+                                <option value="7" {% if vip_level == 7 %}selected{% endif %}>VIP 7</option>
+                                <option value="8" {% if vip_level == 8 %}selected{% endif %}>VIP 8</option>
+                                <option value="9" {% if vip_level == 9 %}selected{% endif %}>VIP 9</option>
+                                <option value="10" {% if vip_level == 10 %}selected{% endif %}>VIP 10</option>
+                            </select>
+                            <div class="form-text">选择卡密对应的VIP等级</div>
+                        </div>
+                        
+                        <!-- 卡密时长 -->
+                        <div class="col-md-6">
+                            <label for="duration" class="form-label">时长（天） <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="duration" name="duration" value="{{ duration }}" required min="1" max="3650" placeholder="请输入卡密时长">
+                            <div class="form-text">卡密的有效期，单位为天</div>
+                        </div>
+                        
+                        <!-- 卡密售价 -->
+                        <div class="col-md-6">
+                            <label for="price" class="form-label">售价 <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">¥</span>
+                                <input type="number" class="form-control" id="price" name="price" value="{{ price }}" required min="0" step="0.01" placeholder="请输入卡密售价">
+                            </div>
+                            <div class="form-text">卡密的销售价格，保留两位小数</div>
+                        </div>
+                        
+                        <!-- 生成数量 -->
+                        <div class="col-md-6">
+                            <label for="quantity" class="form-label">生成数量 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" value="{{ quantity }}" required min="1" max="1000" placeholder="请输入生成数量">
+                            <div class="form-text">一次生成的卡密数量，建议不超过1000张</div>
+                        </div>
+                        
+                        <!-- 表单操作 -->
+                        <div class="col-md-12">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle"></i> 生成卡密
+                                </button>
+                                <button type="reset" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> 重置
+                                </button>
+                                <a href="/admin/dashboard/cards/" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> 返回列表
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧提示信息 -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">生成说明</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>VIP等级说明：</strong>
+                            <ul>
+                                <li>选择卡密对应的VIP等级（0-10）</li>
+                                <li>0级表示普通用户</li>
+                                <li>1-10级表示不同VIP等级</li>
+                            </ul>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>时长说明：</strong>
+                            <p>卡密的有效期，单位为天。例如：30表示30天有效期。</p>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>售价说明：</strong>
+                            <p>卡密的销售价格，用于统计销售业绩。</p>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>数量说明：</strong>
+                            <p>一次生成的卡密数量，建议不超过1000张，以免系统负载过高。</p>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>注意事项：</strong>
+                            <ul>
+                                <li>生成的卡密将以列表形式展示</li>
+                                <li>卡密生成后可以复制或导出</li>
+                                <li>已生成的卡密可以在卡密列表中管理</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

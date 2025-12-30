@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}用户详情 - 后台管理系统{% endblock %}
+
+{% block page_title %}用户详情{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面导航 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/">仪表板</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/users/">用户管理</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">用户详情</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- 用户详情卡片 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">用户基本信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- 左侧基本信息 -->
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th>用户ID</th>
+                                        <td>{{ user.id }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>用户名</th>
+                                        <td>{{ user.username }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>邮箱</th>
+                                        <td>{{ user.email }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>状态</th>
+                                        <td>
+                                            {% if user.status %}
+                                            <span class="badge bg-success">已启用</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">已禁用</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>VIP等级</th>
+                                        <td>
+                                            <span class="badge bg-primary">VIP{{ user.vip_level }}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>VIP过期时间</th>
+                                        <td>
+                                            {% if user.vip_expires_at %}
+                                            {{ user.vip_expires_at | format_date }}
+                                            {% else %}
+                                            <span class="text-muted">未设置</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>注册时间</th>
+                                        <td>{{ user.created_at | format_date }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>最后登录时间</th>
+                                        <td>
+                                            {% if user.last_login_at %}
+                                            {{ user.last_login_at | format_date }}
+                                            {% else %}
+                                            <span class="text-muted">从未登录</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- 右侧扩展信息 -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h4>用户备注</h4>
+                                <div class="bg-light p-3 rounded">
+                                    {% if user.note %}
+                                    {{ user.note }}
+                                    {% else %}
+                                    <span class="text-muted">暂无备注</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <h4>操作记录</h4>
+                                <a href="/admin/dashboard/users/login-history/{{ user.id }}" class="btn btn-info btn-sm">
+                                    <i class="bi bi-clock-history"></i> 查看登录记录
+                                </a>
+                                <a href="/admin/dashboard/users/blacklist/{{ user.id }}" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-shield-x"></i> 黑名单管理
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="mt-4 d-flex gap-2">
+                        <a href="/admin/dashboard/users/edit/{{ user.id }}" class="btn btn-primary">
+                            <i class="bi bi-pencil"></i> 编辑用户
+                        </a>
+                        <a href="/admin/dashboard/users/edit-vip/{{ user.id }}" class="btn btn-success">
+                            <i class="bi bi-crown"></i> 调整VIP
+                        </a>
+                        <form method="post" action="/admin/dashboard/users/toggle-status/{{ user.id }}/{% if user.status %}false{% else %}true{% endif %}" class="d-inline">
+                            {% if user.status %}
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-pause-circle"></i> 禁用用户
+                            </button>
+                            {% else %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-play-circle"></i> 启用用户
+                            </button>
+                            {% endif %}
+                        </form>
+                        <a href="/admin/dashboard/users/" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> 返回列表
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}卡密列表 - 后台管理系统{% endblock %}
+
+{% block page_title %}卡密管理{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面操作栏 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h4">卡密列表</h2>
+                <a href="/admin/dashboard/cards/generate" class="btn btn-primary">
+                    <i class="bi bi-plus"></i> 生成卡密
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 筛选和搜索 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" action="/admin/dashboard/cards/" class="d-flex flex-wrap gap-2">
+                        <div class="flex-grow-1">
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <label for="status" class="form-label">状态</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="">全部状态</option>
+                                        <option value="1" {% if status == 1 %}selected{% endif %}>未使用</option>
+                                        <option value="2" {% if status == 2 %}selected{% endif %}>已使用</option>
+                                        <option value="3" {% if status == 3 %}selected{% endif %}>已过期</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="vip_level" class="form-label">VIP等级</label>
+                                    <select class="form-select" id="vip_level" name="vip_level">
+                                        <option value="">全部等级</option>
+                                        <option value="0" {% if vip_level == 0 %}selected{% endif %}>VIP0</option>
+                                        <option value="1" {% if vip_level == 1 %}selected{% endif %}>VIP1</option>
+                                        <option value="2" {% if vip_level == 2 %}selected{% endif %}>VIP2</option>
+                                        <option value="3" {% if vip_level == 3 %}selected{% endif %}>VIP3</option>
+                                        <option value="4" {% if vip_level == 4 %}selected{% endif %}>VIP4</option>
+                                        <option value="5" {% if vip_level == 5 %}selected{% endif %}>VIP5</option>
+                                        <option value="6" {% if vip_level == 6 %}selected{% endif %}>VIP6</option>
+                                        <option value="7" {% if vip_level == 7 %}selected{% endif %}>VIP7</option>
+                                        <option value="8" {% if vip_level == 8 %}selected{% endif %}>VIP8</option>
+                                        <option value="9" {% if vip_level == 9 %}selected{% endif %}>VIP9</option>
+                                        <option value="10" {% if vip_level == 10 %}selected{% endif %}>VIP10</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 align-items-end">
+                            <button type="submit" class="btn btn-secondary">
+                                <i class="bi bi-search"></i> 筛选
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
+                                <i class="bi bi-arrow-repeat"></i> 重置
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 消息提示 -->
+    {% if error %}
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- 卡密列表表格 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- 批量操作栏 -->
+                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                        <button id="batchDeleteBtn" class="btn btn-danger" disabled>
+                            <i class="bi bi-trash"></i> 批量删除
+                        </button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <form id="batchDeleteForm" method="post" action="/admin/dashboard/cards/batch-delete">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" id="selectAll" class="form-check-input">
+                                    </th>
+                                    <th>ID</th>
+                                    <th>卡密代码</th>
+                                    <th>类型</th>
+                                    <th>时长（天）</th>
+                                    <th>售价</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                    <th>创建人</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if card_list | length == 0 %}
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted">
+                                        <i class="bi bi-info-circle"></i> 暂无卡密数据
+                                    </td>
+                                </tr>
+                                {% else %}
+                                {% for card in card_list %}
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" name="card_ids" value="{{ card.id }}" class="form-check-input card-checkbox">
+                                    </td>
+                                    <td>{{ card.id }}</td>
+                                    <td>
+                                        <code class="card-code">{{ card.card_code }}</code>
+                                        <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copyCardCode('{{ card.card_code }}')" title="复制卡密">
+                                            <i class="bi bi-clipboard"></i> 复制
+                                        </button>
+                                    </td>
+                                    <td>
+                                        {% if card.vip_level > 0 %}
+                                        <span class="badge bg-primary">VIP{{ card.vip_level }}卡</span>
+                                        {% else %}
+                                        <span class="badge bg-success">时长卡</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ card.duration_days }}</td>
+                                    <td>¥{{ card.price }}</td>
+                                    <td>
+                                        {% if card.is_used %}
+                                        <span class="badge bg-danger">已使用</span>
+                                        {% else %}
+                                        <span class="badge bg-success">未使用</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ card.created_at | format_date }}</td>
+                                    <td>系统</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <!-- 查看详情按钮 -->
+                                            <a href="/admin/dashboard/cards/detail/{{ card.id }}" class="btn btn-sm btn-info me-1" title="查看详情">
+                                                <i class="bi bi-eye"></i> 详情
+                                            </a>
+                                            
+                                            <!-- 删除按钮 -->
+                                            <form method="post" action="/admin/dashboard/cards/delete/{{ card.id }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-danger btn-delete" title="删除">
+                                                    <i class="bi bi-trash"></i> 删除
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 分页 -->
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ page - 1 }}{% if status %}&status={{ status }}{% endif %}{% if vip_level %}&vip_level={{ vip_level }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    
+                    <!-- 页码 -->
+                    {% if total_pages > 0 %}
+                    <li class="page-item active">
+                        <a class="page-link" href="#">{{ page }}/{{ total_pages }}</a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ page + 1 }}{% if status %}&status={{ status }}{% endif %}{% if vip_level %}&vip_level={{ vip_level }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // 格式化日期函数
+    function formatDate(timestamp) {
+        const date = new Date(timestamp * 1000);
+        return date.toLocaleString('zh-CN');
+    }
+    
+    // 重置筛选条件
+    function resetFilters() {
+        window.location.href = '/admin/dashboard/cards/';
+    }
+    
+    // 复制卡密
+    function copyCardCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            showMessage('卡密已复制到剪贴板', 'success');
+        }).catch(err => {
+            console.error('复制失败:', err);
+            showMessage('复制失败，请手动复制', 'danger');
+        });
+    }
+    
+    // 显示消息提示
+    function showMessage(message, type = 'info', duration = 3000) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `alert alert-${type} alert-dismissible fade show`;
+        messageElement.role = 'alert';
+        messageElement.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const content = document.querySelector('.content');
+        if (content) {
+            content.insertBefore(messageElement, content.firstChild);
+            
+            setTimeout(() => {
+                messageElement.classList.remove('show');
+                setTimeout(() => {
+                    messageElement.remove();
+                }, 150);
+            }, duration);
+        }
+    }
+    
+    // 全选/取消全选功能
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const cardCheckboxes = document.querySelectorAll('.card-checkbox');
+        const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+        const batchDeleteForm = document.getElementById('batchDeleteForm');
+        
+        // 全选/取消全选
+        selectAllCheckbox.addEventListener('change', function() {
+            cardCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBatchDeleteBtn();
+        });
+        
+        // 单个复选框变化时更新全选状态和批量删除按钮状态
+        cardCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                // 更新全选状态
+                const allChecked = Array.from(cardCheckboxes).every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+                updateBatchDeleteBtn();
+            });
+        });
+        
+        // 更新批量删除按钮状态
+        function updateBatchDeleteBtn() {
+            const anyChecked = Array.from(cardCheckboxes).some(cb => cb.checked);
+            batchDeleteBtn.disabled = !anyChecked;
+        }
+        
+        // 批量删除按钮点击事件
+        batchDeleteBtn.addEventListener('click', function() {
+            const checkedCount = Array.from(cardCheckboxes).filter(cb => cb.checked).length;
+            if (checkedCount === 0) {
+                showMessage('请先选择要删除的卡密', 'warning');
+                return;
+            }
+            
+            if (confirm(`确定要删除选中的 ${checkedCount} 张卡密吗？此操作不可恢复。`)) {
+                batchDeleteForm.submit();
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

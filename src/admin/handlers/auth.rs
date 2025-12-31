@@ -65,8 +65,14 @@ pub async fn login_post(
             // 获取会话
             let session = req.get_session();
             // 保存管理员ID到会话
-            let _ = session.insert("admin_id", user.id);
-            let _ = session.insert("username", user.username.clone());
+            match session.insert("admin_id", user.id) {
+                Ok(_) => eprintln!("Successfully inserted admin_id into session: {}", user.id),
+                Err(e) => eprintln!("Failed to insert admin_id into session: {}", e),
+            };
+            match session.insert("username", user.username.clone()) {
+                Ok(_) => eprintln!("Successfully inserted username into session: {}", user.username),
+                Err(e) => eprintln!("Failed to insert username into session: {}", e),
+            };
             
             // 如果选择了"记住我"，设置session过期时间为7天
             if remember {
@@ -80,9 +86,9 @@ pub async fn login_post(
             // 记录操作日志
             let _ = log_admin_operation(&pool, user.id, "login", Some(&format!("管理员 {} 登录成功", username)), ip);
             
-            // 重定向到仪表板
+            // 重定向到仪表板，使用完整的重定向配置
             HttpResponse::Found()
-                .header(LOCATION, "/admin/dashboard/")
+                .append_header((LOCATION, "/admin/dashboard/"))
                 .finish()
         },
         Err(e) => {
@@ -150,7 +156,7 @@ pub async fn register_post(
             
             // 重定向到登录页面
             HttpResponse::Found()
-                .header(LOCATION, "/admin/login")
+                .append_header((LOCATION, "/admin/login"))
                 .finish()
         },
         Err(e) => {
@@ -232,7 +238,7 @@ pub async fn profile_get(
     } else {
         // 未登录，重定向到登录页面
         HttpResponse::Found()
-            .header(LOCATION, "/admin/login")
+            .append_header((LOCATION, "/admin/login"))
             .finish()
     }
 }
@@ -256,9 +262,9 @@ pub async fn logout_get(
     let _ = session.clear();
     
     // 重定向到登录页面
-    HttpResponse::Found()
-        .header(LOCATION, "/admin/login")
-        .finish()
+            HttpResponse::Found()
+                .append_header((LOCATION, "/admin/login"))
+                .finish()
 }
 
 // 忘记密码页面GET请求处理器
@@ -358,9 +364,9 @@ pub async fn reset_password_post(
     
     if is_reset {
         // 重定向到登录页面
-        HttpResponse::Found()
-            .header(LOCATION, "/admin/login")
-            .finish()
+            HttpResponse::Found()
+                .append_header((LOCATION, "/admin/login"))
+                .finish()
     } else {
         // 重新渲染重置密码页面，显示错误信息
         HttpResponse::Ok()
@@ -468,9 +474,9 @@ pub async fn dashboard_get(
 // 仪表板重定向处理器
 pub async fn dashboard_redirect(_req: HttpRequest) -> impl Responder {
     // 重定向到仪表板首页
-    HttpResponse::Found()
-        .header(LOCATION, "/admin/dashboard/")
-        .finish()
+        HttpResponse::Found()
+            .append_header((LOCATION, "/admin/dashboard/"))
+            .finish()
 }
 
 // 登录表单
@@ -582,9 +588,9 @@ pub async fn change_password_post(
                         let _ = log_admin_operation(&pool, admin_id, "change_password", Some(&format!("管理员 {} 修改密码成功", user.username)), ip);
                         
                         // 重定向到个人中心页面
-                        HttpResponse::Found()
-                            .header(LOCATION, "/admin/dashboard/profile")
-                            .finish()
+                HttpResponse::Found()
+                    .append_header((LOCATION, "/admin/dashboard/profile"))
+                    .finish()
                     },
                     Err(e) => {
                         return HttpResponse::Ok()
@@ -602,7 +608,7 @@ pub async fn change_password_post(
     } else {
         // 未登录，重定向到登录页面
         HttpResponse::Found()
-            .header(LOCATION, "/admin/login")
+            .append_header((LOCATION, "/admin/login"))
             .finish()
     }
 }
@@ -633,9 +639,9 @@ pub async fn change_email_post(
                         let _ = log_admin_operation(&pool, admin_id, "change_email", Some(&format!("管理员 {} 修改邮箱成功", user.username)), ip);
                         
                         // 重定向到个人中心页面
-                        HttpResponse::Found()
-                            .header(LOCATION, "/admin/dashboard/profile")
-                            .finish()
+                HttpResponse::Found()
+                    .append_header((LOCATION, "/admin/dashboard/profile"))
+                    .finish()
                     },
                     Err(e) => {
                         return HttpResponse::Ok()
@@ -653,7 +659,7 @@ pub async fn change_email_post(
     } else {
         // 未登录，重定向到登录页面
         HttpResponse::Found()
-            .header(LOCATION, "/admin/login")
+            .append_header((LOCATION, "/admin/login"))
             .finish()
     }
 }

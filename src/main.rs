@@ -245,7 +245,8 @@ async fn main() -> std::io::Result<()> {
                     Key::from(b"your-secret-key-here-please-change-this-in-production-enough-length-12345678901234567890")
                 )
                 .cookie_content_security(CookieContentSecurity::Private)
-                .cookie_secure(!cfg!(debug_assertions)) // 开发环境下使用非安全cookie，生产环境使用安全cookie
+                .cookie_secure(false) // 开发环境下使用非安全cookie
+                .cookie_same_site(actix_web::cookie::SameSite::Lax) // 使用Lax SameSite策略
                 .build()
             )
             // 注册数据库连接池

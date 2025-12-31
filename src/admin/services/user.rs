@@ -321,6 +321,20 @@ pub fn add_to_blacklist(
     
     let mut conn = pool.get()?;
     
+    // 检查是否已存在相同的用户名、硬件码或IP地址
+    let existing_entry = blacklist::table
+        .filter(
+            blacklist::username.eq(username)
+                .or(blacklist::hardware_code.eq(hardware_code))
+                .or(blacklist::ip_address.eq(ip_address))
+        )
+        .first::<crate::database::models::Blacklist>(&mut conn)
+        .optional()?;
+    
+    if existing_entry.is_some() {
+        return Err(ServiceError::DuplicateEntry("该用户名、硬件码或IP地址已在黑名单中".to_string()));
+    }
+    
     let new_blacklist_entry = diesel::insert_into(blacklist::table)
         .values((
             blacklist::username.eq(username),
@@ -401,4 +415,38 @@ pub fn create_user(
         .get_result::<User>(&mut conn)?;
     
     Ok(new_user)
+}
+
+// 更新用户密码
+pub fn update_user_password(
+    pool: &Pool<ConnectionManager<PgConnection>>,
+    user_id: i32,
+    password: &str,
+    config: &Config,
+) -> Result<User, ServiceError> {
+    let mut conn = pool.get()?;
+    
+    // 检查用户是否存在
+    let existing_user = users::table
+        .filter(users::id.eq(user_id))
+        .select(User::as_select())
+        .first::<User>(&mut conn)
+        .optional()?;
+    
+    if existing_user.is_none() {
+        return Err(ServiceError::NotFound("用户不存在".to_string()));
+    }
+    
+    // 加密密码
+    let password_hash = hash_password(password, config)?;
+    
+    // 更新密码
+    let updated_user = diesel::update(users::table.filter(users::id.eq(user_id)))
+        .set((
+            users::password_hash.eq(&password_hash),
+            users::updated_at.eq(Utc::now()),
+        ))
+        .get_result::<User>(&mut conn)?;
+    
+    Ok(updated_user)
 }

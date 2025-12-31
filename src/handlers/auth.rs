@@ -34,7 +34,14 @@ pub async fn register_handler(
         return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
     }
     
-    match register_user(&pool, req.into_inner(), &config).await {
+    // 获取真实客户端IP
+    let ip = get_client_ip(&req_addr).unwrap_or("0.0.0.0".to_string());
+    
+    // 创建一个新的RegisterRequest，使用真实IP
+    let mut register_req = req.into_inner();
+    register_req.ip_address = ip;
+    
+    match register_user(&pool, register_req, &config).await {
         Ok((user, activation_token)) => {
             HttpResponse::Ok().json(RegisterResponse {
                 message: "Registration successful. Please check your email for verification code.".to_string(),

@@ -215,20 +215,19 @@ pub fn log_admin_operation(
     eprintln!("log_admin_operation called: admin_id={}, action={}, details={:?}, ip={:?}", admin_id, action, details, ip);
     let mut conn = pool.get()?;
     
-    // 转换details为json格式
-    let details_json = serde_json::json!({"message": details.unwrap_or("")});
-    let details_str = details_json.to_string();
+    // 直接使用details字符串，不再转换为JSON格式
+    let details_text = details.unwrap_or("");
     
-    // 使用原始SQL插入，因为details字段是JSONB类型，但schema.rs中定义为Text
+    // 使用原始SQL插入，details字段是text类型，直接插入
     let result = diesel::sql_query(
         "INSERT INTO admin_logs (admin_id, action, target, target_id, details, ip_address, created_at) 
-         VALUES ($1, $2, $3, $4, CAST($5 AS jsonb), $6, $7)"
+         VALUES ($1, $2, $3, $4, $5, $6, $7)"
     )
     .bind::<diesel::sql_types::Integer, _>(admin_id)
     .bind::<diesel::sql_types::Varchar, _>(action)
     .bind::<diesel::sql_types::Varchar, _>("")
     .bind::<diesel::sql_types::Nullable<diesel::sql_types::Integer>, _>(None::<i32>)
-    .bind::<diesel::sql_types::Varchar, _>(details_str)
+    .bind::<diesel::sql_types::Varchar, _>(details_text)
     .bind::<diesel::sql_types::Varchar, _>(ip.unwrap_or_else(|| "unknown".to_string()))
     .bind::<diesel::sql_types::Timestamptz, _>(Utc::now())
     .execute(&mut conn);
@@ -273,6 +272,17 @@ pub fn get_admin_logs(
     
     let mut conn = pool.get()?;
     
+    // 处理用户名筛选：先获取匹配的管理员ID列表
+    let mut admin_ids: Vec<i32> = Vec::new();
+    
+    // 如果提供了用户名，获取匹配的管理员ID列表
+    if let Some(username_val) = username {
+        admin_ids = admin_users
+            .filter(admin_username.ilike(format!("%{username_val}%")))
+            .select(admin_user_id)
+            .load::<i32>(&mut conn)?;
+    }
+    
     // 创建计数查询
     let mut count_query = admin_logs.into_boxed();
     
@@ -284,6 +294,11 @@ pub fn get_admin_logs(
     // 按管理员ID筛选
     if let Some(admin_id_val) = admin_id_filter {
         count_query = count_query.filter(admin_id.eq(admin_id_val));
+    }
+    
+    // 如果有匹配的管理员ID，按这些ID筛选
+    if !admin_ids.is_empty() {
+        count_query = count_query.filter(admin_id.eq_any(admin_ids.clone()));
     }
     
     if let Some(start) = start_date {
@@ -323,6 +338,11 @@ pub fn get_admin_logs(
         data_query = data_query.filter(admin_id.eq(admin_id_val));
     }
     
+    // 如果有匹配的管理员ID，按这些ID筛选
+    if !admin_ids.is_empty() {
+        data_query = data_query.filter(admin_id.eq_any(admin_ids));
+    }
+    
     if let Some(start) = start_date {
         data_query = data_query.filter(created_at.ge(start));
     }
@@ -342,17 +362,8 @@ pub fn get_admin_logs(
     let logs = data_query.load::<(i32, i32, Option<String>, String, String, Option<i32>, String, String, chrono::DateTime<Utc>)>(&mut conn)?
         .into_iter()
         .map(|(id_val, admin_id_val, admin_username_val, action_val, target_val, target_id_val, details_val, ip_address_val, created_at_val)| {
-            // 解析details为JSON，提取message字段
-            let parsed_details = match serde_json::from_str::<serde_json::Value>(&details_val) {
-                Ok(json) => {
-                    if let Some(message) = json.get("message").and_then(|m| m.as_str()) {
-                        message.to_string()
-                    } else {
-                        details_val
-                    }
-                },
-                Err(_) => details_val
-            };
+            // 直接使用字符串details，不再解析JSON
+            let parsed_details = details_val;
             
             AdminLogWithUser {
                 id: id_val,

@@ -7,7 +7,7 @@ use diesel::PgConnection;
 use chrono::{DateTime, Utc, Duration};
 use log::info;
 
-use crate::admin::services::user::{get_users, get_user_by_id, update_user_vip, update_user_status, get_online_users, get_online_users_stats};
+use crate::admin::services::user::{get_users, get_user_by_id, update_user_vip, update_user_status, get_online_users, get_online_users_stats, update_user_password};
 use crate::admin::services::admin_user::log_admin_operation;
 use crate::database::models::User;
 use crate::errors::ServiceError;
@@ -24,7 +24,7 @@ pub async fn user_list(
 ) -> impl Responder {
     // 从查询参数获取筛选条件
     let username = query_params.get("username").and_then(|v| v.as_str());
-    let email = query_params.get("email").and_then(|v| v.as_str());
+    let email: Option<&str> = query_params.get("email").and_then(|v: &tera::Value| v.as_str());
     
     // 处理status参数，支持字符串和布尔值
     let status = match query_params.get("status") {
@@ -176,6 +176,7 @@ pub async fn user_save_vip(
     req: HttpRequest,
     data: web::Data<Tera>,
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
+    config: web::Data<Config>,
     web::Form(form): web::Form<serde_json::Value>,
 ) -> impl Responder {
     // 从表单获取数据并正确转换类型
@@ -196,6 +197,10 @@ pub async fn user_save_vip(
         
     let note = form.get("note").and_then(|v| v.as_str());
     
+    // 获取密码信息
+    let password = form.get("password").and_then(|v| v.as_str());
+    let confirm_password = form.get("confirm_password").and_then(|v| v.as_str());
+    
     // 计算到期时间
     let vip_expires_at = if expires_days > 0 {
         Some(Utc::now() + Duration::days(expires_days as i64))
@@ -203,17 +208,37 @@ pub async fn user_save_vip(
         None
     };
     
-    // 更新用户VIP信息
+    // 先更新VIP信息
     match update_user_vip(&pool, user_id, Some(vip_level), vip_expires_at, note) {
         Ok(updated_user) => {
             // 记录管理员操作日志
+            let mut log_message = format!("更新用户ID {} 的VIP信息: 等级 {}, 有效期 {} 天", user_id, vip_level, expires_days);
+            
+            // 处理密码修改
+            if let Some(pass) = password {
+                if let Some(confirm_pass) = confirm_password {
+                    // 验证密码是否一致
+                    if pass == confirm_pass && !pass.is_empty() {
+                        // 更新密码
+                        match update_user_password(&pool, user_id, pass, &config) {
+                            Ok(_) => {
+                                log_message.push_str(", 并更新了密码");
+                            },
+                            Err(err) => {
+                                eprintln!("更新用户密码失败: {:#?}", err);
+                            }
+                        }
+                    }
+                }
+            }
+            
             if let Some(admin_id) = req.extensions().get::<i32>() {
                 let ip = get_client_ip(&req);
                 let _ = log_admin_operation(
                     &pool,
                     *admin_id,
                     "update_user_vip",
-                    Some(&format!("更新用户ID {} 的VIP信息: 等级 {}, 有效期 {} 天", user_id, vip_level, expires_days)),
+                    Some(&log_message),
                     ip
                 );
             }
@@ -223,7 +248,7 @@ pub async fn user_save_vip(
                 .content_type("application/json")
                 .json(serde_json::json!({
                     "success": true,
-                    "message": "更新用户VIP信息成功"
+                    "message": "更新用户信息成功"
                 }))
         },
         Err(err) => {
@@ -235,7 +260,7 @@ pub async fn user_save_vip(
                 .content_type("application/json")
                 .json(serde_json::json!({
                     "success": false,
-                    "message": "更新用户VIP信息失败"
+                    "message": "更新用户信息失败"
                 }))
         }
     }

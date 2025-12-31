@@ -32,6 +32,8 @@ pub enum AppError {
     JwtError(String),
     /// 密码错误
     PasswordError(String),
+    /// 重复条目
+    DuplicateEntry(String),
 }
 
 impl fmt::Display for AppError {
@@ -45,6 +47,7 @@ impl fmt::Display for AppError {
             AppError::DatabaseError(msg) => write!(f, "Database Error: {}", msg),
             AppError::JwtError(msg) => write!(f, "JWT Error: {}", msg),
             AppError::PasswordError(msg) => write!(f, "Password Error: {}", msg),
+            AppError::DuplicateEntry(msg) => write!(f, "Duplicate Entry: {}", msg),
         }
     }
 }
@@ -60,6 +63,7 @@ impl ResponseError for AppError {
             AppError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::JwtError(_) => StatusCode::UNAUTHORIZED,
             AppError::PasswordError(_) => StatusCode::UNAUTHORIZED,
+            AppError::DuplicateEntry(_) => StatusCode::CONFLICT,
         }
     }
 
@@ -152,6 +156,8 @@ pub enum ServiceError {
     InternalServerError(String),
     /// 数据库错误
     DatabaseError(String),
+    /// 重复条目
+    DuplicateEntry(String),
 }
 
 impl fmt::Display for ServiceError {
@@ -163,6 +169,7 @@ impl fmt::Display for ServiceError {
             ServiceError::NotFound(msg) => write!(f, "{}", msg),
             ServiceError::InternalServerError(msg) => write!(f, "{}", msg),
             ServiceError::DatabaseError(msg) => write!(f, "{}", msg),
+            ServiceError::DuplicateEntry(msg) => write!(f, "{}", msg),
         }
     }
 }
@@ -191,6 +198,7 @@ impl From<ServiceError> for AppError {
             ServiceError::NotFound(msg) => AppError::NotFound(msg),
             ServiceError::InternalServerError(msg) => AppError::InternalServerError(msg),
             ServiceError::DatabaseError(msg) => AppError::DatabaseError(msg),
+            ServiceError::DuplicateEntry(msg) => AppError::DuplicateEntry(msg),
         }
     }
 }
@@ -206,6 +214,7 @@ impl From<AppError> for ServiceError {
             AppError::DatabaseError(msg) => ServiceError::DatabaseError(msg),
             AppError::JwtError(msg) => ServiceError::Unauthorized(msg),
             AppError::PasswordError(msg) => ServiceError::Unauthorized(msg),
+            AppError::DuplicateEntry(msg) => ServiceError::DuplicateEntry(msg),
         }
     }
 }
@@ -220,6 +229,7 @@ impl ServiceError {
             ServiceError::NotFound(msg) => msg,
             ServiceError::InternalServerError(msg) => msg,
             ServiceError::DatabaseError(msg) => msg,
+            ServiceError::DuplicateEntry(msg) => msg,
         }
     }
 }

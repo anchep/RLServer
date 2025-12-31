@@ -147,7 +147,10 @@ async fn main() -> std::io::Result<()> {
     };
     
     // 注册日期格式化过滤器
-    tera.register_filter("format_date", |value: &tera::Value, _args: &std::collections::HashMap<String, tera::Value>| -> Result<tera::Value, tera::Error> {
+    // 创建上海时区(UTC+8)
+    let shanghai_tz = chrono::FixedOffset::east_opt(8 * 3600).unwrap();
+    
+    tera.register_filter("format_date", move |value: &tera::Value, _args: &std::collections::HashMap<String, tera::Value>| -> Result<tera::Value, tera::Error> {
         use chrono::prelude::*;
         
         // 将值转换为字符串，然后解析为DateTime
@@ -158,14 +161,14 @@ async fn main() -> std::io::Result<()> {
         
         // 尝试解析字符串为DateTime
         if let Ok(date) = chrono::DateTime::parse_from_rfc3339(cleaned_str) {
-            // 格式化日期时间
-            Ok(tera::Value::String(date.with_timezone(&Local).format("%Y-%m-%d %H:%M:%S").to_string()))
+            // 格式化日期时间，使用上海时区
+            Ok(tera::Value::String(date.with_timezone(&shanghai_tz).format("%Y-%m-%d %H:%M:%S").to_string()))
         } else {
             // 如果解析失败，尝试其他格式或返回原始字符串
             // 尝试解析为NaiveDateTime
             if let Ok(naive) = chrono::NaiveDateTime::parse_from_str(cleaned_str, "%Y-%m-%d %H:%M:%S") {
                 let dt = DateTime::<Utc>::from_utc(naive, Utc);
-                Ok(tera::Value::String(dt.with_timezone(&Local).format("%Y-%m-%d %H:%M:%S").to_string()))
+                Ok(tera::Value::String(dt.with_timezone(&shanghai_tz).format("%Y-%m-%d %H:%M:%S").to_string()))
             } else {
                 // 如果都解析失败，返回原始字符串
                 Ok(tera::Value::String(cleaned_str.to_string()))
@@ -174,7 +177,7 @@ async fn main() -> std::io::Result<()> {
     });
     
     // 注册datetime-local格式化过滤器
-    tera.register_filter("format_datetime", |value: &tera::Value, _args: &std::collections::HashMap<String, tera::Value>| -> Result<tera::Value, tera::Error> {
+    tera.register_filter("format_datetime", move |value: &tera::Value, _args: &std::collections::HashMap<String, tera::Value>| -> Result<tera::Value, tera::Error> {
         use chrono::prelude::*;
         
         // 将值转换为字符串，然后解析为DateTime
@@ -186,13 +189,13 @@ async fn main() -> std::io::Result<()> {
         // 如果是数字，将其视为时间戳
         if let Ok(timestamp) = cleaned_str.parse::<i64>() {
             let dt = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(timestamp, 0).unwrap_or(NaiveDateTime::default()), Utc);
-            // 格式化日期时间为datetime-local格式
-            Ok(tera::Value::String(dt.with_timezone(&Local).format("%Y-%m-%dT%H:%M").to_string()))
+            // 格式化日期时间为datetime-local格式，使用上海时区
+            Ok(tera::Value::String(dt.with_timezone(&shanghai_tz).format("%Y-%m-%dT%H:%M").to_string()))
         } else {
             // 尝试解析字符串为DateTime
             if let Ok(date) = chrono::DateTime::parse_from_rfc3339(cleaned_str) {
-                // 格式化日期时间为datetime-local格式
-                Ok(tera::Value::String(date.with_timezone(&Local).format("%Y-%m-%dT%H:%M").to_string()))
+                // 格式化日期时间为datetime-local格式，使用上海时区
+                Ok(tera::Value::String(date.with_timezone(&shanghai_tz).format("%Y-%m-%dT%H:%M").to_string()))
             } else {
                 // 如果都解析失败，返回空字符串
                 Ok(tera::Value::String(String::new()))

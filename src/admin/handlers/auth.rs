@@ -22,8 +22,8 @@ pub async fn login_get(
     // 检查是否允许注册
     let allow_register = match get_all_admin_users(&pool) {
         Ok(users) => {
-            // 如果已有超级管理员，检查是否允许注册
-            users.iter().any(|user| user.can_register)
+            // 如果没有管理员用户，允许注册；否则禁止注册
+            users.is_empty()
         },
         Err(_) => false, // 如果获取用户列表失败，默认不允许注册
     };
@@ -116,8 +116,8 @@ pub async fn register_post(
     // 检查是否允许注册
     let allow_register = match get_all_admin_users(&pool) {
         Ok(users) => {
-            // 如果已有超级管理员，检查是否允许注册
-            users.iter().any(|user| user.can_register)
+            // 如果没有管理员用户，允许注册；否则禁止注册
+            users.is_empty()
         },
         Err(_) => false, // 如果获取用户列表失败，默认不允许注册
     };
@@ -179,16 +179,16 @@ pub async fn profile_get(
                 context.insert("username", &user.username);
                 context.insert("is_authenticated", &true);
                 
-                // 获取管理员登录日志
+                // 获取管理员登录日志，不使用action筛选，因为登录日志可能使用不同的action值
                 let login_logs_result = get_admin_logs(
                     &pool,
-                    Some("login"),
+                    None,  // 不使用action筛选，获取所有操作日志
                     Some(admin_id),
                     None,
                     None,
                     None,
                     1,
-                    20
+                    5
                 );
                 
                 // 处理登录日志结果，转换为模板需要的格式
@@ -246,8 +246,8 @@ pub async fn logout_get(
     // 获取会话
     let session = req.get_session();
     if let Ok(Some(admin_id)) = session.get::<i32>("admin_id") {
-        // 记录操作日志
-        let ip = req.connection_info().remote_addr().map(|s| s.to_string());
+        // 记录操作日志，使用真实客户端IP
+        let ip = get_client_ip(&req);
         let _ = log_admin_operation(&pool, admin_id, "logout", Some(&format!("管理员退出登录")), ip);
     }
     // 清除会话
@@ -658,12 +658,23 @@ pub async fn change_email_post(
     }
 }
 
+// 操作日志查询参数
+#[derive(Debug, serde::Deserialize)]
+pub struct LogsQuery {
+    pub page: Option<i32>,
+    pub page_size: Option<i32>,
+    pub action: Option<String>,
+    pub username: Option<String>,
+    pub start_time: Option<String>,
+    pub end_time: Option<String>,
+}
+
 // 操作日志列表页面GET请求处理器
 pub async fn logs_get(
     req: HttpRequest,
     pool: web::Data<r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>>,
     tera: web::Data<Tera>,
-    web::Query(query): web::Query<serde_json::Map<String, serde_json::Value>>,
+    web::Query(query): web::Query<LogsQuery>,
 ) -> impl Responder {
     // 获取会话
     let session = req.get_session();
@@ -675,60 +686,119 @@ pub async fn logs_get(
                 context.insert("username", &user.username);
                 context.insert("is_authenticated", &true);
                 
-                // 解析查询参数
-                let action = query.get("action").and_then(|v| v.as_str());
-                // 注意：我们不使用username作为筛选条件，因为我们希望显示所有管理员的操作日志
-                let _username = query.get("username").and_then(|v| v.as_str());
-                let start_date_str = query.get("start_date").and_then(|v| v.as_str());
-                let end_date_str = query.get("end_date").and_then(|v| v.as_str());
-                let page = query.get("page").and_then(|v| v.as_i64()).unwrap_or(1) as i32;
-                let page_size = 20;
+                // 获取所有管理员用户列表，用于生成操作者下拉菜单
+                let all_admin_users_result = get_all_admin_users(&pool);
+                let all_admin_users = match all_admin_users_result {
+                    Ok(users) => users,
+                    Err(_) => Vec::new()
+                };
+                context.insert("all_admin_users", &all_admin_users);
                 
-                // 解析日期
-                let start_date = start_date_str.and_then(|s| {
-                    chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
-                        .ok()
-                        .map(|d| chrono::DateTime::from_utc(d.and_hms_opt(0, 0, 0).unwrap(), chrono::Utc))
-                });
+                // 获取查询参数
+                let page = query.page.unwrap_or(1);
+                let page_size = query.page_size.unwrap_or(20);
                 
-                let end_date = end_date_str.and_then(|s| {
-                    chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
-                        .ok()
-                        .map(|d| chrono::DateTime::from_utc(d.and_hms_opt(23, 59, 59).unwrap(), chrono::Utc))
-                });
+                // 解析action，处理空字符串情况
+                let action = match &query.action {
+                    Some(action_str) if !action_str.is_empty() => {
+                        Some(action_str.as_str())
+                    },
+                    _ => None
+                };
                 
-                // 获取操作日志，不使用username筛选，这样可以显示所有管理员的操作日志
-                let logs_result = get_admin_logs(
+                // 解析username，处理空字符串情况
+                let username = match &query.username {
+                    Some(username_str) if !username_str.is_empty() => {
+                        Some(username_str.as_str())
+                    },
+                    _ => None
+                };
+                
+                // 解析start_time，处理空字符串情况
+                let start_time = match &query.start_time {
+                    Some(time_str) if !time_str.is_empty() => {
+                        // 处理datetime-local格式: 2023-12-28T14:30
+                        if time_str.contains('T') {
+                            chrono::NaiveDateTime::parse_from_str(time_str, "%Y-%m-%dT%H:%M")
+                                .ok()
+                                .map(|dt| chrono::DateTime::from_utc(dt, chrono::Utc))
+                        } else {
+                            // 兼容旧的日期格式
+                            chrono::NaiveDate::parse_from_str(time_str, "%Y-%m-%d")
+                                .ok()
+                                .map(|d| {
+                                    let naive_dt = d.and_hms(0, 0, 0);
+                                    chrono::DateTime::from_utc(naive_dt, chrono::Utc)
+                                })
+                        }
+                    },
+                    _ => None
+                };
+                
+                // 解析end_time，处理空字符串情况
+                let end_time = match &query.end_time {
+                    Some(time_str) if !time_str.is_empty() => {
+                        // 处理datetime-local格式: 2023-12-28T14:30
+                        if time_str.contains('T') {
+                            // 解析datetime-local格式，然后将时间设置为当天的23:59:59
+                            chrono::NaiveDateTime::parse_from_str(time_str, "%Y-%m-%dT%H:%M")
+                                .ok()
+                                .map(|dt| {
+                                    // 将分钟设置为59，秒和纳秒设置为59
+                                    let dt = chrono::NaiveDateTime::new(
+                                        dt.date(),
+                                        chrono::NaiveTime::from_hms_opt(23, 59, 59).unwrap()
+                                    );
+                                    chrono::DateTime::from_utc(dt, chrono::Utc)
+                                })
+                        } else {
+                            // 兼容旧的日期格式
+                            chrono::NaiveDate::parse_from_str(time_str, "%Y-%m-%d")
+                                .ok()
+                                .map(|d| {
+                                    let naive_dt = d.and_hms(23, 59, 59);
+                                    chrono::DateTime::from_utc(naive_dt, chrono::Utc)
+                                })
+                        }
+                    },
+                    _ => None
+                };
+                
+                // 获取操作日志
+                match get_admin_logs(
                     &pool,
                     action,
                     None,  // 不使用admin_id筛选
-                    None,  // 不使用username筛选
-                    start_date,
-                    end_date,
+                    username,  // 使用username筛选
+                    start_time,
+                    end_time,
                     page,
                     page_size
-                );
-                
-                // 处理日志结果
-                match logs_result {
+                ) {
                     Ok((logs, total_logs)) => {
-                        let total_pages = if total_logs % page_size as i64 == 0 {
-                            total_logs / page_size as i64
-                        } else {
-                            total_logs / page_size as i64 + 1
-                        };
+                        let total_pages = (total_logs + page_size as i64 - 1) / page_size as i64;
                         
                         context.insert("logs", &logs);
-                        context.insert("total_logs", &total_logs);
+                        context.insert("total", &total_logs);
                         context.insert("page", &page);
+                        context.insert("page_size", &page_size);
+                        context.insert("action", &query.action.as_deref().unwrap_or(""));
+                        context.insert("username", &query.username);
+                        context.insert("start_time", &query.start_time);
+                        context.insert("end_time", &query.end_time);
                         context.insert("total_pages", &total_pages);
                     },
                     Err(e) => {
                         eprintln!("获取日志失败: {:#?}", e);
                         // 出错时显示空列表，使用正确的类型
                         context.insert("logs", &Vec::<crate::admin::services::admin_user::AdminLogWithUser>::new());
-                        context.insert("total_logs", &0);
+                        context.insert("total", &0);
                         context.insert("page", &page);
+                        context.insert("page_size", &page_size);
+                        context.insert("action", &query.action.as_deref().unwrap_or(""));
+                        context.insert("username", &query.username);
+                        context.insert("start_time", &query.start_time);
+                        context.insert("end_time", &query.end_time);
                         context.insert("total_pages", &1);
                     }
                 }

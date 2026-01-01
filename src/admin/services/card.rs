@@ -78,6 +78,7 @@ pub fn get_recharge_cards(
     pool: &Pool<ConnectionManager<PgConnection>>,
     status: Option<bool>,
     vip_level: Option<i32>,
+    duration: Option<i32>,
     page: i32,
     page_size: i32,
 ) -> Result<(Vec<RechargeCard>, i64), ServiceError> {
@@ -102,6 +103,10 @@ pub fn get_recharge_cards(
         count_query = count_query.filter(recharge_cards::vip_level.eq(vip_level_val));
     }
     
+    if let Some(duration_val) = duration {
+        count_query = count_query.filter(recharge_cards::duration_days.eq(duration_val));
+    }
+    
     // 获取总条数
     let total = count_query.count().first::<i64>(&mut conn)?;
     
@@ -115,6 +120,10 @@ pub fn get_recharge_cards(
     
     if let Some(vip_level_val) = vip_level {
         data_query = data_query.filter(recharge_cards::vip_level.eq(vip_level_val));
+    }
+    
+    if let Some(duration_val) = duration {
+        data_query = data_query.filter(recharge_cards::duration_days.eq(duration_val));
     }
     
     // 分页

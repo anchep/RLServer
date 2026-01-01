@@ -31,7 +31,7 @@
 
     // 格式化日期
     function formatDate(dateString) {
-        if (!dateString) return '永久';
+        if (!dateString) return '无时间';
         const date = new Date(dateString);
         return date.toLocaleString('zh-CN');
     }
@@ -282,8 +282,8 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="modal-expires-days" class="form-label">有效期（天）</label>
-                                        <input type="number" class="form-control" id="modal-expires-days" name="expires_days" min="0" value="0" placeholder="0表示永久">
-                                        <small class="form-text text-muted">0表示永久有效</small>
+                                        <input type="number" class="form-control" id="modal-expires-days" name="expires_days" min="0" value="0" placeholder="0表示清除时间">
+                                        <small class="form-text text-muted">0表示清除时间</small>
                                     </div>
                                 </div>
                                 
@@ -447,7 +447,7 @@
                                         {% if user.vip_expires_at %}
                                         {{ user.vip_expires_at | format_date }}
                                         {% else %}
-                                        永久
+                                        无时间
                                         {% endif %}
                                     </td>
                                     <td>

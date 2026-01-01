@@ -30,8 +30,8 @@
                                     <label for="status" class="form-label">状态</label>
                                     <select class="form-select" id="status" name="status">
                                         <option value="">全部状态</option>
-                                        <option value="1" {% if status == 1 %}selected{% endif %}>未使用</option>
-                                        <option value="2" {% if status == 2 %}selected{% endif %}>已使用</option>
+                                        <option value="1" {% if status == 1 %}selected{% endif %}>已使用</option>
+                                        <option value="2" {% if status == 2 %}selected{% endif %}>未使用</option>
                                         <option value="3" {% if status == 3 %}selected{% endif %}>已过期</option>
                                     </select>
                                 </div>
@@ -50,6 +50,19 @@
                                         <option value="8" {% if vip_level == 8 %}selected{% endif %}>VIP8</option>
                                         <option value="9" {% if vip_level == 9 %}selected{% endif %}>VIP9</option>
                                         <option value="10" {% if vip_level == 10 %}selected{% endif %}>VIP10</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="duration" class="form-label">时长（天）</label>
+                                    <select class="form-select" id="duration" name="duration">
+                                        <option value="">全部时长</option>
+                                        <option value="1" {% if duration == 1 %}selected{% endif %}>1天</option>
+                                        <option value="7" {% if duration == 7 %}selected{% endif %}>7天</option>
+                                        <option value="15" {% if duration == 15 %}selected{% endif %}>15天</option>
+                                        <option value="30" {% if duration == 30 %}selected{% endif %}>30天</option>
+                                        <option value="90" {% if duration == 90 %}selected{% endif %}>90天</option>
+                                        <option value="180" {% if duration == 180 %}selected{% endif %}>180天</option>
+                                        <option value="365" {% if duration == 365 %}selected{% endif %}>365天</option>
                                     </select>
                                 </div>
                             </div>
@@ -85,7 +98,10 @@
             <div class="card">
                 <div class="card-body">
                     <!-- 批量操作栏 -->
-                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <div class="mb-3 d-flex gap-2 align-items-center">
+                        <button id="batchExportBtn" class="btn btn-primary" disabled>
+                            <i class="bi bi-download"></i> 导出选中卡密
+                        </button>
                         <button id="batchDeleteBtn" class="btn btn-danger" disabled>
                             <i class="bi bi-trash"></i> 批量删除
                         </button>
@@ -126,7 +142,7 @@
                                     <td>{{ card.id }}</td>
                                     <td>
                                         <code class="card-code">{{ card.card_code }}</code>
-                                        <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copyCardCode('{{ card.card_code }}')" title="复制卡密">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-btn" onclick="copyCardCode('{{ card.card_code }}')" title="复制卡密">
                                             <i class="bi bi-clipboard"></i> 复制
                                         </button>
                                     </td>
@@ -181,7 +197,7 @@
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
                     <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                        <a class="page-link" href="?page={{ page - 1 }}{% if status %}&status={{ status }}{% endif %}{% if vip_level %}&vip_level={{ vip_level }}{% endif %}" aria-label="Previous">
+                        <a class="page-link" href="?page={{ page - 1 }}{% if status %}&status={{ status }}{% endif %}{% if vip_level %}&vip_level={{ vip_level }}{% endif %}{% if duration %}&duration={{ duration }}{% endif %}" aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
@@ -194,7 +210,7 @@
                     {% endif %}
                     
                     <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-                        <a class="page-link" href="?page={{ page + 1 }}{% if status %}&status={{ status }}{% endif %}{% if vip_level %}&vip_level={{ vip_level }}{% endif %}" aria-label="Next">
+                        <a class="page-link" href="?page={{ page + 1 }}{% if status %}&status={{ status }}{% endif %}{% if vip_level %}&vip_level={{ vip_level }}{% endif %}{% if duration %}&duration={{ duration }}{% endif %}" aria-label="Next">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
                     </li>
@@ -219,12 +235,45 @@
     
     // 复制卡密
     function copyCardCode(code) {
-        navigator.clipboard.writeText(code).then(() => {
-            showMessage('卡密已复制到剪贴板', 'success');
-        }).catch(err => {
-            console.error('复制失败:', err);
+        // 优先使用Clipboard API
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(code).then(() => {
+                showMessage('卡密已复制到剪贴板', 'success');
+            }).catch(err => {
+                console.error('Clipboard API 复制失败:', err);
+                // 降级方案：使用传统的execCommand方法
+                fallbackCopyTextToClipboard(code);
+            });
+        } else {
+            // 降级方案：使用传统的execCommand方法
+            fallbackCopyTextToClipboard(code);
+        }
+    }
+    
+    // 降级复制方案
+    function fallbackCopyTextToClipboard(code) {
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        textArea.style.position = 'fixed'; // 避免滚动到页面底部
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showMessage('卡密已复制到剪贴板', 'success');
+            } else {
+                showMessage('复制失败，请手动复制', 'danger');
+            }
+        } catch (err) {
+            console.error('传统方法复制失败:', err);
             showMessage('复制失败，请手动复制', 'danger');
-        });
+        }
+        
+        document.body.removeChild(textArea);
     }
     
     // 显示消息提示
@@ -255,6 +304,7 @@
         const selectAllCheckbox = document.getElementById('selectAll');
         const cardCheckboxes = document.querySelectorAll('.card-checkbox');
         const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+        const batchExportBtn = document.getElementById('batchExportBtn');
         const batchDeleteForm = document.getElementById('batchDeleteForm');
         
         // 全选/取消全选
@@ -262,23 +312,24 @@
             cardCheckboxes.forEach(checkbox => {
                 checkbox.checked = this.checked;
             });
-            updateBatchDeleteBtn();
+            updateBatchButtons();
         });
         
-        // 单个复选框变化时更新全选状态和批量删除按钮状态
+        // 单个复选框变化时更新全选状态和批量操作按钮状态
         cardCheckboxes.forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 // 更新全选状态
                 const allChecked = Array.from(cardCheckboxes).every(cb => cb.checked);
                 selectAllCheckbox.checked = allChecked;
-                updateBatchDeleteBtn();
+                updateBatchButtons();
             });
         });
         
-        // 更新批量删除按钮状态
-        function updateBatchDeleteBtn() {
+        // 更新批量操作按钮状态
+        function updateBatchButtons() {
             const anyChecked = Array.from(cardCheckboxes).some(cb => cb.checked);
             batchDeleteBtn.disabled = !anyChecked;
+            batchExportBtn.disabled = !anyChecked;
         }
         
         // 批量删除按钮点击事件
@@ -292,6 +343,59 @@
             if (confirm(`确定要删除选中的 ${checkedCount} 张卡密吗？此操作不可恢复。`)) {
                 batchDeleteForm.submit();
             }
+        });
+        
+        // 批量导出按钮点击事件
+        batchExportBtn.addEventListener('click', function() {
+            const checkedCards = Array.from(cardCheckboxes).filter(cb => cb.checked);
+            if (checkedCards.length === 0) {
+                showMessage('请先选择要导出的卡密', 'warning');
+                return;
+            }
+            
+            // 获取选中的卡密信息
+            const cards = [];
+            checkedCards.forEach(checkbox => {
+                // 找到对应的行
+                const row = checkbox.closest('tr');
+                if (row) {
+                    const tds = row.querySelectorAll('td');
+                    if (tds.length >= 7) {
+                        const cardCode = tds[2].querySelector('.card-code').textContent.trim();
+                        const cardType = tds[3].textContent.trim();
+                        const duration = tds[4].textContent.trim();
+                        const price = tds[5].textContent.trim();
+                        const status = tds[6].textContent.trim();
+                        
+                        cards.push({
+                            cardCode,
+                            cardType,
+                            duration,
+                            price,
+                            status
+                        });
+                    }
+                }
+            });
+            
+            // 生成CSV内容
+            let csvContent = '卡密代码,类型,时长（天）,售价,状态\n';
+            cards.forEach(card => {
+                csvContent += `${card.cardCode},${card.cardType},${card.duration},${card.price},${card.status}\n`;
+            });
+            
+            // 创建下载链接
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `selected_cards_${new Date().getTime()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showMessage(`成功导出 ${cards.length} 张卡密`, 'success');
         });
     });
 </script>

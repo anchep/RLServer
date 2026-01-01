@@ -35,10 +35,18 @@ pub async fn list_get(
         _ => None,
     };
     
+    // 处理duration参数：将字符串转换为Option<i32>
+    let duration = match query.duration {
+        Some(d) if !d.is_empty() => {
+            d.parse::<i32>().ok()
+        },
+        _ => None,
+    };
+    
     let card_type = vip_level;
     
     // 获取卡密列表
-    match get_recharge_cards(&pool, status, vip_level, page, page_size) {
+    match get_recharge_cards(&pool, status, vip_level, duration, page, page_size) {
         Ok((card_list, total)) => {
             let mut context = Context::new();
             context.insert("card_list", &card_list);
@@ -48,6 +56,7 @@ pub async fn list_get(
             context.insert("status", &status);
             context.insert("card_type", &card_type);
             context.insert("vip_level", &vip_level);
+            context.insert("duration", &duration);
             
             // 计算总页数
             let total_pages = (total + page_size as i64 - 1) / page_size as i64;
@@ -556,6 +565,7 @@ pub struct CardListQuery {
     pub page_size: Option<i32>,
     pub status: Option<String>,
     pub vip_level: Option<String>,
+    pub duration: Option<String>,
 }
 
 // 生成卡密表单

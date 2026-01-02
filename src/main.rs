@@ -129,12 +129,11 @@ async fn main() -> std::io::Result<()> {
     
     // 配置API速率限制
     let governor_config = GovernorConfigBuilder::default()
-        .per_second(60)
-        .burst_size(120)
+        .per_second(config.rate_limit_per_second)
+        .burst_size(config.rate_limit_burst_size)
         .finish()
         .unwrap();
     
-    let governor_config = web::Data::new(governor_config);
     let config_clone = config.clone();
     
     // 初始化Tera模板引擎
@@ -236,8 +235,11 @@ async fn main() -> std::io::Result<()> {
         App::new()
             // 添加日志中间件，配置为使用X-Forwarded-For头
             .wrap(Logger::new("%a %r %s %b %{Referer}i %{User-Agent}i %T"))
-            // 添加API速率限制中间件
-            .wrap(Governor::new(&governor_config))
+            // 条件性添加API速率限制中间件
+            .wrap(actix_web::middleware::Condition::new(
+                config_clone.rate_limit_enabled,
+                Governor::new(&governor_config)
+            ))
             // 添加会话中间件
             .wrap(
                 SessionMiddleware::builder(

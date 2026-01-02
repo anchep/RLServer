@@ -27,19 +27,14 @@ pub async fn register_handler(
     pool: web::Data<Pool>,
     config: web::Data<Config>,
     req: web::Json<RegisterRequest>,
-    req_addr: actix_web::HttpRequest,
 ) -> impl Responder {
     // 验证请求参数
     if let Err(err) = req.validate() {
         return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
     }
     
-    // 获取真实客户端IP
-    let ip = get_client_ip(&req_addr).unwrap_or("0.0.0.0".to_string());
-    
-    // 创建一个新的RegisterRequest，使用真实IP
-    let mut register_req = req.into_inner();
-    register_req.ip_address = ip;
+    // 使用用户上传的IP地址
+    let register_req = req.into_inner();
     
     match register_user(&pool, register_req, &config).await {
         Ok((user, activation_token)) => {
@@ -59,17 +54,17 @@ pub async fn login_handler(
     pool: web::Data<Pool>,
     config: web::Data<Config>,
     req: web::Json<LoginRequest>,
-    req_addr: actix_web:: HttpRequest,
 ) -> impl Responder {
     // 验证请求参数
     if let Err(err) = req.validate() {
         return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
     }
     
-    // 获取客户端IP
-    let ip = get_client_ip(&req_addr).unwrap_or("0.0.0.0".to_string());
+    // 从请求体中获取用户上传的IP地址
+    let login_request = req.into_inner();
+    let ip = login_request.ip_address.clone();
     
-    match login_user(&pool, req.into_inner(), &ip, &config).await {
+    match login_user(&pool, login_request, &ip, &config).await {
         Ok((user, token)) => {
             HttpResponse::Ok().json(LoginResponse {
                 message: "Login successful".to_string(),

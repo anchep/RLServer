@@ -187,6 +187,9 @@ pub struct LoginRequest {
     
     #[validate(length(min = 1, max = 50, message = "Software version must be between 1 and 50 characters"))]
     pub software_version: String,
+    
+    #[validate(length(min = 1, max = 50, message = "IP address must be between 1 and 50 characters"))]
+    pub ip_address: String,
 }
 
 // 密码重置请求DTO

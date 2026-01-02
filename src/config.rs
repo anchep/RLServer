@@ -42,6 +42,10 @@ pub struct Config {
     pub password_require_lowercase: bool,
     pub password_require_digit: bool,
     pub password_require_special: bool,
+    // 速率限制配置
+    pub rate_limit_enabled: bool,
+    pub rate_limit_per_second: u64,
+    pub rate_limit_burst_size: u32,
 }
 
 impl Config {
@@ -92,6 +96,10 @@ impl Config {
             password_require_lowercase: env::var("PASSWORD_REQUIRE_LOWERCASE").unwrap_or("true".to_string()).parse().unwrap_or(true),
             password_require_digit: env::var("PASSWORD_REQUIRE_DIGIT").unwrap_or("true".to_string()).parse().unwrap_or(true),
             password_require_special: env::var("PASSWORD_REQUIRE_SPECIAL").unwrap_or("true".to_string()).parse().unwrap_or(true),
+            // 速率限制配置
+            rate_limit_enabled: env::var("RATE_LIMIT_ENABLED").unwrap_or("false".to_string()).parse().unwrap_or(false),
+            rate_limit_per_second: env::var("RATE_LIMIT_PER_SECOND").unwrap_or("60".to_string()).parse().unwrap_or(60),
+            rate_limit_burst_size: env::var("RATE_LIMIT_BURST_SIZE").unwrap_or("120".to_string()).parse().unwrap_or(120),
         }
     }
 }

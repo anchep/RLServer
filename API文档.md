@@ -14,215 +14,6 @@
 ## 基础路径
 所有API请求的基础路径为：`http://localhost:28001`
 
-## 路由结构
-
-### 1. 健康检查
-- **路径**：`/health`
-- **方法**：GET
-- **认证**：不需要
-- **功能**：检查服务是否正常运行
-- **返回示例**：
-  ```json
-  "ok"
-  ```
-
-### 2. 公开API (/api)
-
-#### 2.1 认证相关
-- **注册**：`POST /api/auth/register`
-  - 功能：注册新用户
-  - 参数：username, email, password
-
-- **登录**：`POST /api/auth/login`
-  - 功能：用户登录，返回JWT token
-  - 参数：username, password
-
-- **刷新token**：`POST /api/auth/refresh`
-  - 功能：使用刷新token获取新的访问token
-  - 参数：refresh_token
-
-- **重置密码**：`POST /api/auth/reset-password`
-  - 功能：发送密码重置邮件
-  - 参数：email
-
-- **验证重置密码**：`POST /api/auth/reset-password/verify`
-  - 功能：验证重置密码验证码
-  - 参数：email, code
-
-- **退出登录**：`POST /api/auth/logout`
-  - 功能：使当前token失效
-  - 参数：token
-
-- **邮箱验证**：`POST /api/auth/verify-email`
-  - 功能：验证邮箱
-  - 参数：token
-
-#### 2.2 其他公开API
-- **心跳**：`POST /api/heartbeat`
-  - 功能：保持连接活跃
-  - 参数：user_id
-
-### 3. 保护API (/api/protected)
-需要在请求头中包含有效的JWT token：`Authorization: Bearer <token>`
-
-#### 3.1 用户相关
-- **获取用户信息**：`GET /api/protected/users/me`
-  - 功能：获取当前登录用户信息
-
-- **获取可用软件**：`GET /api/protected/users/software`
-  - 功能：获取用户可用的软件列表
-
-#### 3.2 充值相关
-- **充值**：`POST /api/protected/recharge`
-  - 功能：使用卡密充值
-  - 参数：card_code
-
-- **充值记录**：`GET /api/protected/recharge/logs`
-  - 功能：获取用户的充值记录
-
-#### 3.3 软件相关
-- **获取所有软件**：`GET /api/protected/software`
-  - 功能：获取所有软件列表
-
-- **检查软件访问权限**：`GET /api/protected/software/{software_id}/access`
-  - 功能：检查用户是否有权限访问指定软件
-
-### 4. 后台管理API (/admin)
-
-#### 4.1 认证
-- **登录**：`GET/POST /admin/login`
-  - 功能：管理员登录
-
-- **注册**：`GET/POST /admin/register`
-  - 功能：注册管理员账号
-
-- **退出登录**：`GET /admin/logout`
-  - 功能：管理员退出登录
-
-- **忘记密码**：`GET/POST /admin/forgot-password`
-  - 功能：管理员忘记密码
-
-- **重置密码**：`GET/POST /admin/reset-password/{token}`
-  - 功能：管理员重置密码
-
-#### 4.2 仪表板
-- **首页**：`GET /admin/dashboard/`
-  - 功能：仪表盘首页
-
-- **个人中心**：`GET /admin/dashboard/profile`
-  - 功能：管理员个人中心
-
-- **修改密码**：`GET/POST /admin/dashboard/change-password`
-  - 功能：修改管理员密码
-
-- **修改邮箱**：`POST /admin/dashboard/change-email`
-  - 功能：修改管理员邮箱
-
-- **操作日志**：`GET /admin/dashboard/logs`
-  - 功能：查看管理员操作日志
-
-#### 4.3 软件管理
-- **软件列表**：`GET /admin/dashboard/software`
-  - 功能：查看软件列表
-
-- **添加软件**：`GET/POST /admin/dashboard/software/add`
-  - 功能：添加新软件
-
-- **软件详情**：`GET /admin/dashboard/software/detail/{id}`
-  - 功能：查看软件详情
-
-- **编辑软件**：`GET/POST /admin/dashboard/software/edit/{id}`
-  - 功能：编辑软件信息
-
-- **删除软件**：`POST /admin/dashboard/software/delete/{id}`
-  - 功能：删除软件
-
-- **切换软件状态**：`POST /admin/dashboard/software/toggle/{id}`
-  - 功能：切换软件的启用/禁用状态
-
-#### 4.4 卡密管理
-- **卡密列表**：`GET /admin/dashboard/cards`
-  - 功能：查看卡密列表，支持筛选和分页
-  - 参数：status, vip_level, duration, page, page_size
-  - 时长筛选：支持1天、7天、15天、30天、90天、180天、365天
-
-- **生成卡密**：`GET/POST /admin/dashboard/cards/generate`
-  - 功能：生成新的卡密
-  - 参数：vip_level, duration, price, quantity
-
-- **充值历史**：`GET /admin/dashboard/cards/history`
-  - 功能：查看充值历史记录
-  - 参数：user_id, card_code, start_time, end_time, page, page_size
-
-- **卡密详情**：`GET /admin/dashboard/cards/detail/{id}`
-  - 功能：查看卡密详情
-
-- **更新卡密售价**：`POST /admin/dashboard/cards/update-price/{id}`
-  - 功能：更新卡密的售价
-  - 参数：price
-
-- **删除卡密**：`POST /admin/dashboard/cards/delete/{id}`
-  - 功能：删除单个卡密
-
-- **批量删除卡密**：`POST /admin/dashboard/cards/batch-delete`
-  - 功能：批量删除选中的卡密
-  - 参数：card_ids（数组）
-
-- **导出卡密**：`客户端JavaScript实现`
-  - 功能：导出选中的卡密为CSV文件
-  - 操作：在卡密列表页面勾选要导出的卡密，点击"导出选中卡密"按钮
-  - 格式：CSV格式，包含字段：卡密代码、类型、时长（天）、售价、状态
-
-#### 4.5 用户管理
-- **用户列表**：`GET /admin/dashboard/users`
-  - 功能：查看用户列表
-
-- **添加用户**：`GET/POST /admin/dashboard/users/add`
-  - 功能：添加新用户
-
-- **用户详情**：`GET /admin/dashboard/users/detail/{id}`
-  - 功能：查看用户详情
-
-- **编辑用户**：`GET /admin/dashboard/users/edit/{id}`
-  - 功能：编辑用户信息
-
-- **编辑VIP**：`GET /admin/dashboard/users/edit-vip/{id}`
-  - 功能：编辑用户VIP信息
-
-- **保存VIP**：`POST /admin/dashboard/users/save-vip`
-  - 功能：保存用户VIP信息
-
-- **切换用户状态**：`POST /admin/dashboard/users/toggle-status/{id}/{status}`
-  - 功能：切换用户的启用/禁用状态
-
-- **登录历史**：`GET /admin/dashboard/users/login-history/{id}`
-  - 功能：查看用户登录历史
-
-- **在线用户**：`GET /admin/dashboard/users/online`
-  - 功能：查看在线用户列表
-
-- **黑名单管理**：`GET /admin/dashboard/users/blacklist`
-  - 功能：查看黑名单列表
-
-- **添加到黑名单**：`GET/POST /admin/dashboard/users/blacklist/add`
-  - 功能：将用户添加到黑名单
-
-- **从黑名单移除**：`POST /admin/dashboard/users/blacklist/remove/{id}`
-  - 功能：将用户从黑名单移除
-
-#### 4.6 统计分析
-- **综合统计**：`GET /admin/dashboard/stats/overview`
-  - 功能：查看综合统计数据
-
-- **销售统计**：`GET /admin/dashboard/stats/sales`
-  - 功能：查看销售统计数据
-
-- **用户统计**：`GET /admin/dashboard/stats/users`
-  - 功能：查看用户统计数据
-
-- **卡密统计**：`GET /admin/dashboard/stats/cards`
-  - 功能：查看卡密统计数据
-
 ## 认证机制
 
 ### JWT Token
@@ -252,6 +43,405 @@ Authorization: Bearer <access_token>
 - **403**：没有权限访问该资源
 - **404**：资源不存在
 - **500**：服务器内部错误
+
+## API参考
+
+### 1. 健康检查
+
+#### 1.1 检查服务状态
+- **URL**：`/health`
+- **方法**：`GET`
+- **认证**：不需要
+- **功能**：检查服务是否正常运行
+- **响应示例**：
+  ```json
+  "ok"
+  ```
+- **状态码**：
+  - 200：服务正常
+
+### 2. 认证相关API
+
+#### 2.1 用户注册
+- **URL**：`/api/auth/register`
+- **方法**：`POST`
+- **认证**：不需要
+- **功能**：注册新用户
+- **请求体**：
+  ```json
+  {
+    "username": "user123",
+    "email": "user@example.com",
+    "password": "a1234567",
+    "hardware_code": "hard-123456",
+    "software_version": "v1.0.0"
+  }
+  ```
+- **请求参数说明**：
+  - username：String，3-20个字符
+  - email：String，有效的邮箱格式
+  - password：String，至少8个字符
+  - hardware_code：String，1-100个字符，设备硬件标识符
+  - software_version：String，客户端软件版本
+- **响应示例**：
+  ```json
+  {
+    "message": "User registered successfully, please verify your email",
+    "activation_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+  ```
+- **状态码**：
+  - 200：注册成功
+  - 400：参数错误或用户已存在
+
+#### 2.2 用户登录
+- **URL**：`/api/auth/login`
+- **方法**：`POST`
+- **认证**：不需要
+- **功能**：用户登录，获取访问令牌
+- **请求体**：
+  ```json
+  {
+    "username": "user123",
+    "password": "a1234567",
+    "hardware_code": "hard-123456",
+    "software_version": "v1.0.0",
+    "ip_address": "192.168.1.100"
+  }
+  ```
+- **请求参数说明**：
+  - username：String，用户名
+  - password：String，密码
+  - hardware_code：String，设备硬件标识符
+  - software_version：String，客户端软件版本
+  - ip_address：String，用户自行上传的IP地址
+- **响应示例**：
+  ```json
+  {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "vip_level": 1,
+    "vip_expires_at": "2025-12-31T23:59:59Z"
+  }
+  ```
+- **状态码**：
+  - 200：登录成功
+  - 401：用户名或密码错误
+
+#### 2.3 刷新令牌
+- **URL**：`/api/auth/refresh`
+- **方法**：`POST`
+- **认证**：不需要
+- **功能**：使用刷新令牌获取新的访问令牌
+- **请求体**：
+  ```json
+  {
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+  ```
+- **请求参数说明**：
+  - refresh_token：String，刷新令牌
+- **响应示例**：
+  ```json
+  {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "vip_level": 1,
+    "vip_expires_at": "2025-12-31T23:59:59Z"
+  }
+  ```
+- **状态码**：
+  - 200：刷新成功
+  - 401：刷新令牌无效
+
+#### 2.4 发送密码重置邮件
+- **URL**：`/api/auth/reset-password`
+- **方法**：`POST`
+- **认证**：不需要
+- **功能**：发送密码重置邮件
+- **请求体**：
+  ```json
+  {
+    "email": "user@example.com"
+  }
+  ```
+- **请求参数说明**：
+  - email：String，有效的邮箱格式
+- **响应示例**：
+  ```json
+  {
+    "message": "Password reset email sent successfully"
+  }
+  ```
+- **状态码**：
+  - 200：邮件发送成功
+  - 404：邮箱不存在
+
+#### 2.5 验证重置密码
+- **URL**：`/api/auth/reset-password/verify`
+- **方法**：`POST`
+- **认证**：不需要
+- **功能**：验证重置密码验证码并更新密码
+- **请求体**：
+  ```json
+  {
+    "username": "user123",
+    "email": "user@example.com",
+    "code": "123456",
+    "new_password": "newpassword123"
+  }
+  ```
+- **请求参数说明**：
+  - username：String，用户名
+  - email：String，有效的邮箱格式
+  - code：String，6位验证码
+  - new_password：String，至少8个字符
+- **响应示例**：
+  ```json
+  {
+    "message": "Password reset successfully"
+  }
+  ```
+- **状态码**：
+  - 200：密码重置成功
+  - 400：验证码无效或已过期
+
+#### 2.6 退出登录
+- **URL**：`/api/auth/logout`
+- **方法**：`POST`
+- **认证**：不需要
+- **功能**：使当前session_token失效
+- **请求体**：
+  ```json
+  {
+    "session_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+  ```
+- **请求参数说明**：
+  - session_token：String，会话令牌
+- **响应示例**：
+  ```json
+  {
+    "message": "Logout successful"
+  }
+  ```
+- **状态码**：
+  - 200：退出成功
+
+#### 2.7 邮箱验证
+- **URL**：`/api/auth/verify-email`
+- **方法**：`POST`
+- **认证**：不需要
+- **功能**：验证邮箱
+- **请求体**：
+  ```json
+  {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "code": "123456"
+  }
+  ```
+- **请求参数说明**：
+  - token：String，激活令牌
+  - code：String，6位验证码
+- **响应示例**：
+  ```json
+  {
+    "message": "Email verified successfully"
+  }
+  ```
+- **状态码**：
+  - 200：验证成功
+  - 400：令牌或验证码无效
+
+### 3. 心跳API
+
+#### 3.1 保持连接活跃
+- **URL**：`/api/heartbeat`
+- **方法**：`POST`
+- **认证**：不需要
+- **功能**：保持连接活跃，更新用户在线状态
+- **请求体**：
+  ```json
+  {
+    "session_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "hardware_code": "hard-123456",
+    "software_version": "v1.0.0"
+  }
+  ```
+- **请求参数说明**：
+  - session_token：String，会话令牌
+  - hardware_code：String，设备硬件标识符
+  - software_version：String，客户端软件版本
+- **响应示例**：
+  ```json
+  {
+    "message": "Heartbeat updated successfully"
+  }
+  ```
+- **状态码**：
+  - 200：心跳更新成功
+  - 400：无效令牌
+
+### 4. 受保护的API（需要认证）
+
+#### 4.1 获取当前用户信息
+- **URL**：`/api/protected/users/me`
+- **方法**：`GET`
+- **认证**：需要
+- **功能**：获取当前登录用户的信息
+- **响应示例**：
+  ```json
+  {
+    "id": 1,
+    "username": "user123",
+    "email": "user@example.com",
+    "vip_level": 1,
+    "vip_end_time": "2025-12-31T23:59:59Z",
+    "created_at": "2025-01-01T00:00:00Z",
+    "updated_at": "2025-01-01T00:00:00Z",
+    "is_active": true
+  }
+  ```
+- **状态码**：
+  - 200：获取成功
+  - 401：未认证
+
+#### 4.2 获取用户可用软件
+- **URL**：`/api/protected/users/software`
+- **方法**：`GET`
+- **认证**：需要
+- **功能**：获取用户可用的软件列表
+- **响应示例**：
+  ```json
+  [
+    {
+      "id": 1,
+      "name": "Software1",
+      "chinese_name": "软件1",
+      "description": "这是软件1",
+      "version": "1.0.0",
+      "is_active": true
+    },
+    {
+      "id": 2,
+      "name": "Software2",
+      "chinese_name": "软件2",
+      "description": "这是软件2",
+      "version": "2.0.0",
+      "is_active": true
+    }
+  ]
+  ```
+- **状态码**：
+  - 200：获取成功
+  - 401：未认证
+
+#### 4.3 使用卡密充值
+- **URL**：`/api/protected/recharge`
+- **方法**：`POST`
+- **认证**：需要
+- **功能**：使用卡密为用户充值
+- **请求体**：
+  ```json
+  {
+    "card_code": "CARD-123456789"
+  }
+  ```
+- **请求参数说明**：
+  - card_code：String，卡密代码
+- **响应示例**：
+  ```json
+  {
+    "message": "Recharge successful",
+    "vip_level": 2,
+    "vip_expires_at": "2026-01-01T00:00:00Z",
+    "recharge_log": {
+      "id": 1,
+      "card_code": "CARD-123456789",
+      "amount": 30,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  }
+  ```
+- **状态码**：
+  - 200：充值成功
+  - 400：卡密无效或已使用
+  - 401：未认证
+
+#### 4.4 获取用户充值记录
+- **URL**：`/api/protected/recharge/logs`
+- **方法**：`GET`
+- **认证**：需要
+- **功能**：获取用户的充值记录
+- **响应示例**：
+  ```json
+  [
+    {
+      "id": 1,
+      "card_code": "CARD-123456789",
+      "amount": 30,
+      "created_at": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "card_code": "CARD-987654321",
+      "amount": 15,
+      "created_at": "2024-12-01T00:00:00Z"
+    }
+  ]
+  ```
+- **状态码**：
+  - 200：获取成功
+  - 401：未认证
+
+#### 4.5 获取所有软件
+- **URL**：`/api/protected/software`
+- **方法**：`GET`
+- **认证**：需要
+- **功能**：获取所有软件列表
+- **响应示例**：
+  ```json
+  [
+    {
+      "id": 1,
+      "name": "Software1",
+      "chinese_name": "软件1",
+      "description": "这是软件1",
+      "version": "1.0.0",
+      "is_active": true
+    },
+    {
+      "id": 2,
+      "name": "Software2",
+      "chinese_name": "软件2",
+      "description": "这是软件2",
+      "version": "2.0.0",
+      "is_active": true
+    }
+  ]
+  ```
+- **状态码**：
+  - 200：获取成功
+  - 401：未认证
+
+#### 4.6 检查软件访问权限
+- **URL**：`/api/protected/software/{software_id}/access`
+- **方法**：`GET`
+- **认证**：需要
+- **功能**：检查用户是否有权限访问指定软件
+- **路径参数**：
+  - software_id：Integer，软件ID
+- **响应示例**：
+  ```json
+  {
+    "has_access": true,
+    "message": "You have access to this software"
+  }
+  ```
+- **状态码**：
+  - 200：检查成功
+  - 401：未认证
+  - 403：没有访问权限
+  - 404：软件不存在
 
 ## 部署流程
 
@@ -300,74 +490,6 @@ docker-compose exec app cargo run --bin create_admin
 ### 3. 访问应用
 - **后台管理**：`http://localhost:28001/admin/login`
 - **API文档**：`http://localhost:28001/API文档.md`
-
-### 4. 常用命令
-
-#### 4.1 查看日志
-```bash
-# 查看应用日志
-docker-compose logs -f app
-
-# 查看数据库日志
-docker-compose logs -f db
-
-# 查看Nginx日志
-docker-compose logs -f nginx
-```
-
-#### 4.2 重启服务
-```bash
-docker-compose restart
-
-# 重启特定服务
-docker-compose restart app
-```
-
-#### 4.3 停止服务
-```bash
-docker-compose down
-
-# 停止并删除所有资源（包括数据库数据）
-docker-compose down -v
-```
-
-#### 4.4 进入容器
-```bash
-# 进入应用容器
-docker-compose exec app bash
-
-# 进入数据库容器
-docker-compose exec db psql -U admin -d rl_server
-```
-
-### 5. 开发流程
-
-#### 5.1 开发环境启动
-```bash
-docker-compose up --build -d
-```
-
-#### 5.2 代码质量检查
-```bash
-# 检查代码语法
-cargo check
-
-# 格式化代码
-cargo fmt
-
-# 检查代码风格
-cargo clippy
-```
-
-#### 5.3 运行测试
-```bash
-cargo test
-```
-
-#### 5.4 重新构建
-```bash
-docker-compose up --build -d
-```
 
 ## 项目结构
 

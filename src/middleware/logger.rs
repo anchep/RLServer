@@ -4,6 +4,7 @@ use futures::future::{ok, Either, Future, Ready};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Instant;
+use crate::utils::ip::get_client_ip;
 
 // 日志中间件
 pub struct RequestLogger;
@@ -57,7 +58,7 @@ where
             let req = res.request();
             let method = req.method();
             let uri = req.uri();
-            let client_addr = req.peer_addr().unwrap_or(std::net::SocketAddr::from(([0, 0, 0, 0], 0)));
+            let client_ip = get_client_ip(req).unwrap_or("0.0.0.0".to_string());
             let user_agent = req.headers().get(header::USER_AGENT)
                 .map(|h| h.to_str().unwrap_or("unknown"))
                 .unwrap_or("unknown");
@@ -65,7 +66,7 @@ where
             // 记录请求日志
             log::info!(
                 "{} {} {} {} {:?} {:?}",
-                client_addr.ip(),
+                client_ip,
                 method,
                 uri.path(),
                 status.as_u16(),

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}销售业绩统计 - 后台管理系统{% endblock %}
+
+{% block page_title %}销售业绩统计{% endblock %}
+
+{% block styles %}
+    <script src="/static/js/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 统计卡片 -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-center p-3">
+                <h3>总销售金额</h3>
+                <p class="h4 mt-2">¥{{ sales_stats.total_sales }}</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center p-3">
+                <h3>销售笔数</h3>
+                <p class="h4 mt-2">{{ sales_stats.sales_count }}</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center p-3">
+                <h3>平均每笔销售额</h3>
+                <p class="h4 mt-2">¥{{ sales_stats.avg_sales }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 导航选项卡 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/dashboard/stats/overview">综合统计</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/admin/dashboard/stats/sales">销售业绩</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/dashboard/stats/users">用户统计</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/dashboard/stats/cards">卡密统计</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 时间范围选择 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-5">
+                            <label for="start_date" class="form-label">开始时间：</label>
+                            <input type="datetime-local" id="start_date" name="start_date" class="form-control">
+                        </div>
+                        <div class="col-md-5">
+                            <label for="end_date" class="form-label">结束时间：</label>
+                            <input type="datetime-local" id="end_date" name="end_date" class="form-control">
+                        </div>
+                        <div class="col-md-2 align-self-end">
+                            <button type="submit" class="btn btn-primary w-100">查询</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 图表区域 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">销售业绩趋势</h3>
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 初始化销售业绩图表
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    const salesChart = new Chart(salesCtx, {
+        type: 'bar',
+        data: {
+            labels: ['销售业绩'],
+            datasets: [{
+                label: '总销售金额',
+                data: [{{ sales_stats.total_sales }}],
+                backgroundColor: '#36A2EB',
+                borderColor: '#36A2EB',
+                borderWidth: 1
+            }, {
+                label: '销售笔数',
+                data: [{{ sales_stats.sales_count }}],
+                backgroundColor: '#FF6384',
+                borderColor: '#FF6384',
+                borderWidth: 1
+            }, {
+                label: '平均每笔销售额',
+                data: [{{ sales_stats.avg_sales }}],
+                backgroundColor: '#4BC0C0',
+                borderColor: '#4BC0C0',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

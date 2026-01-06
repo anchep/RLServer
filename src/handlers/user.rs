@@ -4,6 +4,19 @@ use crate::database::models::*;
 use crate::services::user::*;
 use crate::database::Pool;
 
+// 用户信息响应结构体，只返回特定字段
+#[derive(Debug, Serialize)]
+struct UserInfoResponse {
+    id: i32,
+    username: String,
+    email: String,
+    vip_level: i32,
+    vip_expires_at: Option<chrono::DateTime<chrono::Utc>>,
+    last_login_at: Option<chrono::DateTime<chrono::Utc>>,
+    last_logout_at: Option<chrono::DateTime<chrono::Utc>>,
+    status: bool,
+}
+
 // 软件列表响应结构体，包含软件列表和用户VIP信息
 #[derive(Debug, Serialize)]
 struct SoftwareListResponse {
@@ -25,7 +38,20 @@ pub async fn get_user_info_handler(
     };
     
     match get_user_info(&pool, user_id).await {
-        Ok(user) => HttpResponse::Ok().json(user),
+        Ok(user) => {
+            // 创建只包含特定字段的响应结构体
+            let user_response = UserInfoResponse {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                vip_level: user.vip_level,
+                vip_expires_at: user.vip_expires_at,
+                last_login_at: user.last_login_at,
+                last_logout_at: user.last_logout_at,
+                status: user.status,
+            };
+            HttpResponse::Ok().json(user_response)
+        },
         Err(err) => HttpResponse::InternalServerError().json(serde_json::json!({ "error": err.to_string() }))
     }
 }

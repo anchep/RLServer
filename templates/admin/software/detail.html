@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}软件详情 - 后台管理系统{% endblock %}
+
+{% block page_title %}软件详情{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面导航 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/">仪表板</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/software/">软件管理</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ software.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- 软件详情卡片 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">软件基本信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- 左侧基本信息 -->
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th>软件名称</th>
+                                        <td>{{ software.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>中文名称</th>
+                                        <td>{{ software.chinese_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>状态</th>
+                                        <td>
+                                            {% if software.status %}
+                                            <span class="badge bg-success">已启用</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">已禁用</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>需要管理员权限</th>
+                                        <td>
+                                            {% if software.requires_admin %}
+                                            <span class="badge bg-warning">是</span>
+                                            {% else %}
+                                            <span class="badge bg-success">否</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>所需VIP等级</th>
+                                        <td>
+                                            <span class="badge bg-primary">VIP{{ software.required_vip_level }}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>可执行文件名称</th>
+                                        <td>{{ software.executable_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>MD5校验和</th>
+                                        <td>{{ software.md5_checksum }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- 右侧描述信息 -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h4>简短描述</h4>
+                                <p>{{ software.description }}</p>
+                            </div>
+                            <div>
+                                <h4>详细描述</h4>
+                                <div class="bg-light p-3 rounded">
+                                    {{ software.detailed_description }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="mt-4 d-flex gap-2">
+                        <a href="/admin/dashboard/software/edit/{{ software.id }}" class="btn btn-primary">
+                            <i class="bi bi-pencil"></i> 编辑软件
+                        </a>
+                        <form method="post" action="/admin/dashboard/software/toggle/{{ software.id }}" class="d-inline">
+                            {% if software.status %}
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-pause-circle"></i> 禁用软件
+                            </button>
+                            {% else %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-play-circle"></i> 启用软件
+                            </button>
+                            {% endif %}
+                        </form>
+                        <form method="post" action="/admin/dashboard/software/delete/{{ software.id }}" class="d-inline" onsubmit="return confirm('确定要删除该软件吗？此操作不可恢复！')">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> 删除软件
+                            </button>
+                        </form>
+                        <a href="/admin/dashboard/software/" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> 返回列表
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

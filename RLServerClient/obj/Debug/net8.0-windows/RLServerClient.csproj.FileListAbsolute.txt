@@ -1,0 +1,8 @@
+C:\Project\RLServer\RLServerClient\obj\Debug\net8.0-windows\RLServerClient.csproj.AssemblyReference.cache
+C:\Project\RLServer\RLServerClient\obj\Debug\net8.0-windows\RLServerClient.GeneratedMSBuildEditorConfig.editorconfig
+C:\Project\RLServer\RLServerClient\obj\Debug\net8.0-windows\RLServerClient.AssemblyInfoInputs.cache
+C:\Project\RLServer\RLServerClient\obj\Debug\net8.0-windows\RLServerClient.AssemblyInfo.cs
+C:\Project\RLServer\RLServerClient\obj\Debug\net8.0-windows\RLServerClient.csproj.CoreCompileInputs.cache
+C:\Project\RLServer\RLServerClient\obj\Debug\net8.0-windows\RLServerClient.sourcelink.json
+C:\Project\RLServer\RLServerClient\obj\Debug\net8.0-windows\RLServerClient.Form1.resources
+C:\Project\RLServer\RLServerClient\obj\Debug\net8.0-windows\RLServerClient.csproj.GenerateResource.cache

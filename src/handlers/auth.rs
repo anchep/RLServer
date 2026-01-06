@@ -6,6 +6,7 @@ use crate::services::auth::*;
 use crate::database::Pool;
 use crate::config::Config;
 use crate::errors::AppError;
+use crate::utils::ip::get_client_ip;
 
 #[derive(Debug, Serialize)]
 struct RegisterResponse {
@@ -26,14 +27,16 @@ pub async fn register_handler(
     pool: web::Data<Pool>,
     config: web::Data<Config>,
     req: web::Json<RegisterRequest>,
-    req_addr: actix_web::HttpRequest,
 ) -> impl Responder {
     // 验证请求参数
     if let Err(err) = req.validate() {
         return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
     }
     
-    match register_user(&pool, req.into_inner(), &config).await {
+    // 使用用户上传的IP地址
+    let register_req = req.into_inner();
+    
+    match register_user(&pool, register_req, &config).await {
         Ok((user, activation_token)) => {
             HttpResponse::Ok().json(RegisterResponse {
                 message: "Registration successful. Please check your email for verification code.".to_string(),
@@ -51,18 +54,17 @@ pub async fn login_handler(
     pool: web::Data<Pool>,
     config: web::Data<Config>,
     req: web::Json<LoginRequest>,
-    req_addr: actix_web:: HttpRequest,
 ) -> impl Responder {
     // 验证请求参数
     if let Err(err) = req.validate() {
         return HttpResponse::BadRequest().json(serde_json::json!({ "error": err.to_string() }));
     }
     
-    // 获取客户端IP
-    let conn_info = req_addr.connection_info();
-    let ip = conn_info.realip_remote_addr().unwrap_or("0.0.0.0");
+    // 从请求体中获取用户上传的IP地址
+    let login_request = req.into_inner();
+    let ip = login_request.ip_address.clone();
     
-    match login_user(&pool, req.into_inner(), ip, &config).await {
+    match login_user(&pool, login_request, &ip, &config).await {
         Ok((user, token)) => {
             HttpResponse::Ok().json(LoginResponse {
                 message: "Login successful".to_string(),

@@ -1,10 +1,11 @@
+use bigdecimal::BigDecimal;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 // 用户表
-#[derive(Queryable, Identifiable, Debug, Serialize, Deserialize, Insertable, AsChangeset)]
+#[derive(Queryable, Identifiable, Debug, Serialize, Deserialize, Insertable, AsChangeset, Selectable)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(treat_none_as_null = true)]
 pub struct User {
@@ -22,6 +23,8 @@ pub struct User {
     pub last_logout_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub note: String,
+    pub status: bool,
 }
 
 // 软件表
@@ -40,10 +43,11 @@ pub struct Software {
     pub required_vip_level: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub status: bool,
 }
 
 // 充值卡密表
-#[derive(Queryable, Identifiable, Debug, Serialize, Deserialize, Insertable, AsChangeset)]
+#[derive(Queryable, Identifiable, Debug, Serialize, Deserialize, Insertable, AsChangeset, Selectable)]
 #[diesel(table_name = crate::schema::recharge_cards)]
 #[diesel(treat_none_as_null = true)]
 pub struct RechargeCard {
@@ -56,10 +60,56 @@ pub struct RechargeCard {
     pub used_at: Option<DateTime<Utc>>,
     pub used_by: Option<i32>,
     pub created_at: DateTime<Utc>,
+    pub price: BigDecimal,
+}
+
+// 管理员用户表
+#[derive(Queryable, Identifiable, Debug, Serialize, Deserialize, Insertable, AsChangeset)]
+#[diesel(table_name = crate::schema::admin_users)]
+#[diesel(treat_none_as_null = true)]
+pub struct AdminUser {
+    pub id: i32,
+    pub username: String,
+    pub password_hash: String,
+    pub email: String,
+    pub email_verified: bool,
+    pub is_superadmin: bool,
+    pub can_register: bool,
+    pub last_login_at: Option<DateTime<Utc>>,
+    pub last_login_ip: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+// 管理员操作日志表
+#[derive(Queryable, Identifiable, Debug, Serialize, Deserialize, Insertable)]
+#[diesel(table_name = crate::schema::admin_logs)]
+#[diesel(treat_none_as_null = true)]
+pub struct AdminLog {
+    pub id: i32,
+    pub admin_id: i32,
+    pub action: String,
+    pub target: String,
+    pub target_id: Option<i32>,
+    pub details: String,
+    pub ip_address: String,
+    pub created_at: DateTime<Utc>,
+}
+
+// 管理员会话表
+#[derive(Queryable, Identifiable, Debug, Serialize, Deserialize, Insertable)]
+#[diesel(table_name = crate::schema::admin_sessions)]
+#[diesel(treat_none_as_null = true)]
+pub struct AdminSession {
+    pub id: i32,
+    pub admin_id: i32,
+    pub session_id: String,
+    pub expires_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
 }
 
 // 充值日志表
-#[derive(Queryable, Identifiable, Debug, Serialize, Deserialize, Insertable, AsChangeset)]
+#[derive(Queryable, Identifiable, Debug, Serialize, Deserialize, Insertable, AsChangeset, Selectable)]
 #[diesel(table_name = crate::schema::recharge_logs)]
 #[diesel(treat_none_as_null = true)]
 pub struct RechargeLog {
@@ -137,6 +187,9 @@ pub struct LoginRequest {
     
     #[validate(length(min = 1, max = 50, message = "Software version must be between 1 and 50 characters"))]
     pub software_version: String,
+    
+    #[validate(length(min = 1, max = 50, message = "IP address must be between 1 and 50 characters"))]
+    pub ip_address: String,
 }
 
 // 密码重置请求DTO

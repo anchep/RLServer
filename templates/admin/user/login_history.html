@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}用户登录记录 - 后台管理系统{% endblock %}
+
+{% block page_title %}用户登录记录{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面操作栏 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h4">用户登录记录</h2>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 筛选条件 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" action="/admin/dashboard/users/login-history/{{ user_id }}" class="d-flex flex-wrap gap-2">
+                        <div class="flex-grow-1">
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <label for="start_date" class="form-label">开始日期</label>
+                                    <input type="date" name="start_date" class="form-control" placeholder="开始日期">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="end_date" class="form-label">结束日期</label>
+                                    <input type="date" name="end_date" class="form-control" placeholder="结束日期">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 align-items-end">
+                            <button type="submit" class="btn btn-secondary">
+                                <i class="bi bi-search"></i> 筛选
+                            </button>
+                            <a href="/admin/dashboard/users/login-history/{{ user_id }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-repeat"></i> 重置
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 登录记录表格 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>登录时间</th>
+                                    <th>IP地址</th>
+                                    <th>硬件信息</th>
+                                    <th>软件版本</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if login_history | length == 0 %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">
+                                        <i class="bi bi-info-circle"></i> 暂无登录记录
+                                    </td>
+                                </tr>
+                                {% else %}
+                                {% for record in login_history %}
+                                <tr>
+                                    <td>{{ record.login_time | format_date }}</td>
+                                    <td>{{ record.ip_address }}</td>
+                                    <td>{% if record.hardware_info %}{{ record.hardware_info }}{% else %}-{% endif %}</td>
+                                    <td>{% if record.software_version %}{{ record.software_version }}{% else %}-{% endif %}</td>
+                                </tr>
+                                {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 分页 -->
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                                        <a class="page-link" href="?page={{ page - 1 }}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <!-- 页码 -->
+                                    {% if total_pages > 0 %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">{{ page }}/{{ total_pages }}</a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                                        <a class="page-link" href="?page={{ page + 1 }}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

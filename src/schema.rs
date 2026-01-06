@@ -42,6 +42,7 @@ table! {
         used_at -> Nullable<Timestamptz>,
         used_by -> Nullable<Int4>,
         created_at -> Timestamptz,
+        price -> Numeric,
     }
 }
 
@@ -70,6 +71,7 @@ table! {
         required_vip_level -> Int4,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        status -> Bool,
     }
 }
 
@@ -89,6 +91,8 @@ table! {
         last_logout_at -> Nullable<Timestamptz>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        note -> Text,
+        status -> Bool,
     }
 }
 
@@ -115,5 +119,47 @@ table! {
     }
 }
 
+// 管理员用户表
+table! {
+    admin_users (id) {
+        id -> Int4,
+        username -> Varchar,
+        password_hash -> Varchar,
+        email -> Varchar,
+        email_verified -> Bool,
+        is_superadmin -> Bool,
+        can_register -> Bool,
+        last_login_at -> Nullable<Timestamptz>,
+        last_login_ip -> Nullable<Varchar>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+// 管理员操作日志表
+table! {
+    admin_logs (id) {
+        id -> Int4,
+        admin_id -> Int4,
+        action -> Varchar,
+        target -> Varchar,
+        target_id -> Nullable<Int4>,
+        details -> Text,
+        ip_address -> Varchar,
+        created_at -> Timestamptz,
+    }
+}
+
+// 管理员会话表
+table! {
+    admin_sessions (id) {
+        id -> Int4,
+        admin_id -> Int4,
+        session_id -> Varchar,
+        expires_at -> Timestamptz,
+        created_at -> Timestamptz,
+    }
+}
+
 // 导出表，以便在其他文件中使用
-allow_tables_to_appear_in_same_query!(login_logs, online_users, recharge_cards, recharge_logs, software, users, verification_codes, blacklist,);
+allow_tables_to_appear_in_same_query!(login_logs, online_users, recharge_cards, recharge_logs, software, users, verification_codes, blacklist, admin_users, admin_logs, admin_sessions,);

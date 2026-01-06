@@ -32,6 +32,8 @@ pub enum AppError {
     JwtError(String),
     /// 密码错误
     PasswordError(String),
+    /// 重复条目
+    DuplicateEntry(String),
 }
 
 impl fmt::Display for AppError {
@@ -45,6 +47,7 @@ impl fmt::Display for AppError {
             AppError::DatabaseError(msg) => write!(f, "Database Error: {}", msg),
             AppError::JwtError(msg) => write!(f, "JWT Error: {}", msg),
             AppError::PasswordError(msg) => write!(f, "Password Error: {}", msg),
+            AppError::DuplicateEntry(msg) => write!(f, "Duplicate Entry: {}", msg),
         }
     }
 }
@@ -60,6 +63,7 @@ impl ResponseError for AppError {
             AppError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::JwtError(_) => StatusCode::UNAUTHORIZED,
             AppError::PasswordError(_) => StatusCode::UNAUTHORIZED,
+            AppError::DuplicateEntry(_) => StatusCode::CONFLICT,
         }
     }
 
@@ -134,5 +138,98 @@ impl From<lettre::address::AddressError> for AppError {
 impl From<native_tls::Error> for AppError {
     fn from(err: native_tls::Error) -> Self {
         AppError::InternalServerError(err.to_string())
+    }
+}
+
+/// 服务层错误类型
+#[derive(Debug)]
+pub enum ServiceError {
+    /// 无效的请求数据
+    BadRequest(String),
+    /// 未授权
+    Unauthorized(String),
+    /// 禁止访问
+    Forbidden(String),
+    /// 资源未找到
+    NotFound(String),
+    /// 内部服务器错误
+    InternalServerError(String),
+    /// 数据库错误
+    DatabaseError(String),
+    /// 重复条目
+    DuplicateEntry(String),
+}
+
+impl fmt::Display for ServiceError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ServiceError::BadRequest(msg) => write!(f, "{}", msg),
+            ServiceError::Unauthorized(msg) => write!(f, "{}", msg),
+            ServiceError::Forbidden(msg) => write!(f, "{}", msg),
+            ServiceError::NotFound(msg) => write!(f, "{}", msg),
+            ServiceError::InternalServerError(msg) => write!(f, "{}", msg),
+            ServiceError::DatabaseError(msg) => write!(f, "{}", msg),
+            ServiceError::DuplicateEntry(msg) => write!(f, "{}", msg),
+        }
+    }
+}
+
+impl From<diesel::result::Error> for ServiceError {
+    fn from(err: diesel::result::Error) -> Self {
+        match err {
+            diesel::result::Error::NotFound => ServiceError::NotFound("Resource not found".to_string()),
+            _ => ServiceError::DatabaseError(err.to_string()),
+        }
+    }
+}
+
+impl From<r2d2::Error> for ServiceError {
+    fn from(err: r2d2::Error) -> Self {
+        ServiceError::DatabaseError(err.to_string())
+    }
+}
+
+impl From<ServiceError> for AppError {
+    fn from(err: ServiceError) -> Self {
+        match err {
+            ServiceError::BadRequest(msg) => AppError::BadRequest(msg),
+            ServiceError::Unauthorized(msg) => AppError::Unauthorized(msg),
+            ServiceError::Forbidden(msg) => AppError::Forbidden(msg),
+            ServiceError::NotFound(msg) => AppError::NotFound(msg),
+            ServiceError::InternalServerError(msg) => AppError::InternalServerError(msg),
+            ServiceError::DatabaseError(msg) => AppError::DatabaseError(msg),
+            ServiceError::DuplicateEntry(msg) => AppError::DuplicateEntry(msg),
+        }
+    }
+}
+
+impl From<AppError> for ServiceError {
+    fn from(err: AppError) -> Self {
+        match err {
+            AppError::BadRequest(msg) => ServiceError::BadRequest(msg),
+            AppError::Unauthorized(msg) => ServiceError::Unauthorized(msg),
+            AppError::Forbidden(msg) => ServiceError::Forbidden(msg),
+            AppError::NotFound(msg) => ServiceError::NotFound(msg),
+            AppError::InternalServerError(msg) => ServiceError::InternalServerError(msg),
+            AppError::DatabaseError(msg) => ServiceError::DatabaseError(msg),
+            AppError::JwtError(msg) => ServiceError::Unauthorized(msg),
+            AppError::PasswordError(msg) => ServiceError::Unauthorized(msg),
+            AppError::DuplicateEntry(msg) => ServiceError::DuplicateEntry(msg),
+        }
+    }
+}
+
+// 为 ServiceError 添加 message 方法
+impl ServiceError {
+    pub fn message(&self) -> &str {
+        match self {
+            ServiceError::BadRequest(msg) => msg,
+            ServiceError::Unauthorized(msg) => msg,
+            ServiceError::Forbidden(msg) => msg,
+            ServiceError::NotFound(msg) => msg,
+            ServiceError::InternalServerError(msg) => msg,
+            ServiceError::DatabaseError(msg) => msg,
+            ServiceError::DuplicateEntry(msg) => msg,
+        }
     }
 }

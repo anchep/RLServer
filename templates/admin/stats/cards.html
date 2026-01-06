@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}卡密统计 - 后台管理系统{% endblock %}
+
+{% block page_title %}卡密统计{% endblock %}
+
+{% block styles %}
+    <script src="/static/js/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 统计卡片 -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3>总卡密数</h3>
+                <p class="h4 mt-2">{{ card_stats.total_cards }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3>未使用卡密数</h3>
+                <p class="h4 mt-2">{{ card_stats.unused_cards }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3>已使用卡密数</h3>
+                <p class="h4 mt-2">{{ card_stats.used_cards }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center p-3">
+                <h3>总销售金额</h3>
+                <p class="h4 mt-2">¥{{ card_stats.total_sales }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 导航选项卡 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/dashboard/stats/overview">综合统计</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/dashboard/stats/sales">销售业绩</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/dashboard/stats/users">用户统计</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/admin/dashboard/stats/cards">卡密统计</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 图表区域 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">卡密使用情况</h3>
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="cardsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 初始化卡密统计图表
+    const cardsCtx = document.getElementById('cardsChart').getContext('2d');
+    const cardsChart = new Chart(cardsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['未使用卡密数', '已使用卡密数'],
+            datasets: [{
+                    label: '卡密使用情况',
+                    data: [{{ card_stats.unused_cards }}, {{ card_stats.used_cards }}],
+                    backgroundColor: [
+                        '#36A2EB',
+                        '#FF6384'
+                    ],
+                    borderColor: [
+                        '#36A2EB',
+                        '#FF6384'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}

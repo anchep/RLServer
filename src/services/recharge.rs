@@ -3,7 +3,7 @@ use anyhow::Result;
 use chrono::Utc;
 use crate::database::{models::*, Pool};
 use crate::schema::*;
-use crate::services::user::update_user_vip;
+
 
 pub async fn recharge_with_card(pool: &Pool, user_id: i32, card_code: &str) -> Result<(User, RechargeLog)> {
     let mut conn = pool.get()?;

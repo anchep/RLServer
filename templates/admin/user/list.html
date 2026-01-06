@@ -1,0 +1,531 @@
+{% extends "base.html" %}
+
+{% block title %}用户管理 - 后台管理系统{% endblock %}
+
+{% block page_title %}用户管理{% endblock %}
+
+{% block scripts %}
+<script>
+    // 获取用户详情API
+    async function getUserDetail(userId) {
+        const response = await fetch(`/admin/dashboard/api/users/detail/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        return response.json();
+    }
+
+    // 保存用户VIP信息API
+    async function saveUserVipInfo(userData) {
+        const response = await fetch('/admin/dashboard/users/save-vip', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams(userData)
+        });
+        return response.ok;
+    }
+
+    // 格式化日期
+    function formatDate(dateString) {
+        if (!dateString) return '无时间';
+        const date = new Date(dateString);
+        return date.toLocaleString('zh-CN');
+    }
+
+    // 编辑按钮点击事件
+    document.addEventListener('click', async function(e) {
+        // 编辑用户
+        if (e.target.closest('.edit-user-btn')) {
+            const btn = e.target.closest('.edit-user-btn');
+            const userId = btn.dataset.userId;
+            
+            // 获取用户详情
+            try {
+                const user = await getUserDetail(userId);
+                
+                // 填充弹窗表单
+                document.getElementById('modal-user-id').value = user.id;
+                document.getElementById('modal-username').value = user.username;
+                document.getElementById('modal-email').value = user.email;
+                document.getElementById('modal-status').value = user.status ? '启用' : '禁用';
+                document.getElementById('modal-created-at').value = formatDate(user.created_at);
+                document.getElementById('modal-vip-level').value = user.vip_level;
+                document.getElementById('modal-current-expires').value = formatDate(user.vip_expires_at);
+                document.getElementById('modal-note').value = user.note || '';
+                
+                // 显示弹窗
+                const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                modal.show();
+            } catch (error) {
+                console.error('获取用户详情失败:', error);
+                alert('获取用户详情失败，请刷新页面重试');
+            }
+        }
+        // 启用/禁用用户
+        else if (e.target.closest('form[action^="/admin/dashboard/users/toggle-status"]')) {
+            e.preventDefault();
+            const form = e.target.closest('form');
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> 处理中...';
+                
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams(new FormData(form))
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('用户状态更新成功');
+                    window.location.reload();
+                } else {
+                    alert('更新失败: ' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('更新用户状态失败:', error);
+                alert('更新用户状态失败，请刷新页面重试');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+        // 加入黑名单
+        else if (e.target.closest('.add-blacklist-btn')) {
+            const btn = e.target.closest('.add-blacklist-btn');
+            const username = btn.dataset.username;
+            const originalText = btn.innerHTML;
+            
+            if (!confirm(`确定要将用户 "${username}" 加入黑名单吗？`)) {
+                return;
+            }
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> 处理中...';
+                
+                const response = await fetch('/admin/dashboard/users/blacklist/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({ username: username })
+                });
+                
+                if (response.ok) {
+                    alert('用户已成功加入黑名单');
+                    window.location.reload();
+                } else {
+                    alert('加入黑名单失败');
+                }
+            } catch (error) {
+                console.error('加入黑名单失败:', error);
+                alert('加入黑名单失败，请刷新页面重试');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+    });
+
+    // 保存按钮点击事件
+    document.getElementById('saveUserBtn').addEventListener('click', async function() {
+        // 收集表单数据
+        const form = document.getElementById('editUserForm');
+        const formData = new FormData(form);
+        const userData = Object.fromEntries(formData.entries());
+        
+        // 保存数据
+        try {
+            const success = await saveUserVipInfo(userData);
+            if (success) {
+                // 关闭弹窗
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                modal.hide();
+                
+                // 刷新页面
+                window.location.reload();
+            } else {
+                alert('保存失败，请刷新页面重试');
+            }
+        } catch (error) {
+            console.error('保存用户信息失败:', error);
+            alert('保存用户信息失败，请刷新页面重试');
+        }
+    });
+    
+    // 密码显示/隐藏切换功能
+    document.getElementById('modal-toggle-password').addEventListener('click', function() {
+        const passwordInput = document.getElementById('modal-password');
+        const icon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    });
+    
+    // 实时检查两次密码是否一致
+    document.getElementById('modal-confirm-password').addEventListener('input', function() {
+        const password = document.getElementById('modal-password').value;
+        const confirmPassword = this.value;
+        
+        if (password && confirmPassword && password !== confirmPassword) {
+            this.classList.add('is-invalid');
+            this.setCustomValidity('两次输入的密码不一致');
+        } else {
+            this.classList.remove('is-invalid');
+            this.setCustomValidity('');
+        }
+    });
+    
+    document.getElementById('modal-password').addEventListener('input', function() {
+        const confirmPassword = document.getElementById('modal-confirm-password').value;
+        if (confirmPassword) {
+            const password = this.value;
+            if (password !== confirmPassword) {
+                document.getElementById('modal-confirm-password').classList.add('is-invalid');
+                document.getElementById('modal-confirm-password').setCustomValidity('两次输入的密码不一致');
+            } else {
+                document.getElementById('modal-confirm-password').classList.remove('is-invalid');
+                document.getElementById('modal-confirm-password').setCustomValidity('');
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 编辑用户弹窗 -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">编辑用户</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 用户基本信息 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="card-title">用户基本信息</h6>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="modal-username" class="form-label">用户名</label>
+                                        <input type="text" class="form-control" id="modal-username" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="modal-email" class="form-label">邮箱</label>
+                                        <input type="email" class="form-control" id="modal-email" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="modal-status" class="form-label">状态</label>
+                                        <input type="text" class="form-control" id="modal-status" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="modal-created-at" class="form-label">注册时间</label>
+                                        <input type="text" class="form-control" id="modal-created-at" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIP设置表单 -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="card-title">VIP设置</h6>
+                            <form id="editUserForm" class="row g-3">
+                                <input type="hidden" id="modal-user-id" name="user_id">
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="modal-vip-level" class="form-label">VIP等级 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="modal-vip-level" name="vip_level" required>
+                                            <option value="0">普通用户</option>
+                                            <option value="1">VIP 1</option>
+                                            <option value="2">VIP 2</option>
+                                            <option value="3">VIP 3</option>
+                                            <option value="4">VIP 4</option>
+                                            <option value="5">VIP 5</option>
+                                            <option value="6">VIP 6</option>
+                                            <option value="7">VIP 7</option>
+                                            <option value="8">VIP 8</option>
+                                            <option value="9">VIP 9</option>
+                                            <option value="10">VIP 10</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="modal-expires-days" class="form-label">有效期（天）</label>
+                                        <input type="number" class="form-control" id="modal-expires-days" name="expires_days" min="0" value="0" placeholder="0表示清除时间">
+                                        <small class="form-text text-muted">0表示清除时间</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="modal-current-expires" class="form-label">当前到期时间</label>
+                                        <input type="text" class="form-control" id="modal-current-expires" readonly>
+                                    </div>
+                                </div>
+                                
+                                <!-- 密码修改部分 -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="modal-password" class="form-label">新密码</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" id="modal-password" name="password" placeholder="请输入新密码">
+                                            <button type="button" class="btn btn-outline-secondary" id="modal-toggle-password">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="modal-confirm-password" class="form-label">确认密码</label>
+                                        <input type="password" class="form-control" id="modal-confirm-password" name="confirm_password" placeholder="请再次输入新密码">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="modal-note" class="form-label">备注</label>
+                                        <textarea class="form-control" id="modal-note" name="note" rows="3" placeholder="请输入备注信息"></textarea>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveUserBtn">保存设置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 页面操作栏 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h4">用户管理</h2>
+                <a href="/admin/dashboard/users/add" class="btn btn-primary">
+                    <i class="bi bi-plus"></i> 添加用户
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 筛选条件 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="/admin/dashboard/users" class="d-flex flex-wrap gap-2">
+                        <div class="flex-grow-1">
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <label for="username" class="form-label">用户名</label>
+                                    <input type="text" class="form-control" id="username" name="username" value="{{ username_filter }}" placeholder="请输入用户名">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="email" class="form-label">邮箱</label>
+                                    <input type="email" class="form-control" id="email" name="email" value="{{ email_filter }}" placeholder="请输入邮箱">
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="status" class="form-label">状态</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="" {% if status_filter == "" %}selected{% endif %}>全部</option>
+                                        <option value="true" {% if status_filter == true %}selected{% endif %}>启用</option>
+                                        <option value="false" {% if status_filter == false %}selected{% endif %}>禁用</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="vip_level" class="form-label">VIP等级</label>
+                                    <select class="form-select" id="vip_level" name="vip_level">
+                                        <option value="" {% if vip_level_filter == "" %}selected{% endif %}>全部</option>
+                                        <option value="0" {% if vip_level_filter == 0 %}selected{% endif %}>普通用户</option>
+                                        <option value="1" {% if vip_level_filter == 1 %}selected{% endif %}>VIP 1</option>
+                                        <option value="2" {% if vip_level_filter == 2 %}selected{% endif %}>VIP 2</option>
+                                        <option value="3" {% if vip_level_filter == 3 %}selected{% endif %}>VIP 3</option>
+                                        <option value="4" {% if vip_level_filter == 4 %}selected{% endif %}>VIP 4</option>
+                                        <option value="5" {% if vip_level_filter == 5 %}selected{% endif %}>VIP 5</option>
+                                        <option value="6" {% if vip_level_filter == 6 %}selected{% endif %}>VIP 6</option>
+                                        <option value="7" {% if vip_level_filter == 7 %}selected{% endif %}>VIP 7</option>
+                                        <option value="8" {% if vip_level_filter == 8 %}selected{% endif %}>VIP 8</option>
+                                        <option value="9" {% if vip_level_filter == 9 %}selected{% endif %}>VIP 9</option>
+                                        <option value="10" {% if vip_level_filter == 10 %}selected{% endif %}>VIP 10</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <label for="page_size" class="form-label">每页显示</label>
+                                    <select class="form-select" id="page_size" name="page_size">
+                                        <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+                                        <option value="20" {% if page_size == 20 %}selected{% endif %}>20</option>
+                                        <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+                                        <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 align-items-end">
+                            <button type="submit" class="btn btn-secondary">
+                                <i class="bi bi-search"></i> 筛选
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="window.location.href = '/admin/dashboard/users'">
+                                <i class="bi bi-arrow-repeat"></i> 重置
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-centered table-nowrap table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>用户名</th>
+                                    <th>邮箱</th>
+                                    <th>VIP等级</th>
+                                    <th>VIP到期时间</th>
+                                    <th>状态</th>
+                                    <th>注册时间</th>
+                                    <th>登录时间</th>
+                                    <th>登录IP</th>
+                                    <th>登录硬件</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if user.vip_level > 0 %}
+                                        <span class="badge bg-primary">VIP {{ user.vip_level }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">普通用户</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.vip_expires_at %}
+                                        {{ user.vip_expires_at | format_date }}
+                                        {% else %}
+                                        无时间
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.status %}
+                                        <span class="badge bg-success">启用</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">禁用</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.created_at | format_date }}</td>
+                                    <td>
+                                        {% if user.last_login_at %}
+                                        {{ user.last_login_at | format_date }}
+                                        {% else %}
+                                        - 未登录 -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.last_login_ip %}
+                                        {{ user.last_login_ip }}
+                                        {% else %}
+                                        - 未登录 -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.last_login_hardware %}
+                                        {{ user.last_login_hardware }}
+                                        {% else %}
+                                        - 未登录 -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary me-1 edit-user-btn" data-user-id="{{ user.id }}"><i class="mdi mdi-pencil"></i> 编辑</button>
+                                        <form method="post" action="/admin/dashboard/users/toggle-status/{{ user.id }}/{% if user.status %}false{% else %}true{% endif %}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm {% if user.status %}btn-danger{% else %}btn-success{% endif %}">
+                                                <i class="mdi {% if user.status %}mdi-lock{% else %}mdi-lock-open{% endif %}"></i> {% if user.status %}禁用{% else %}启用{% endif %}
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-sm btn-warning me-1 add-blacklist-btn" data-username="{{ user.username }}"><i class="mdi mdi-block-helper"></i> 加入黑名单</button>
+                                        <a href="/admin/dashboard/users/login-history/{{ user.id }}" class="btn btn-sm btn-info me-1"><i class="mdi mdi-history"></i> 登录历史</a>
+                                        <a href="/admin/dashboard/cards/history?user_id={{ user.id }}" class="btn btn-sm btn-secondary"><i class="mdi mdi-credit-card-plus"></i> 充卡历史</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 分页 -->
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                                        <a class="page-link" href="?page={{ page - 1 }}{% if username_filter %}&username={{ username_filter }}{% endif %}{% if email_filter %}&email={{ email_filter }}{% endif %}{% if status_filter != "" %}&status={{ status_filter }}{% endif %}{% if vip_level_filter != "" %}&vip_level={{ vip_level_filter }}{% endif %}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <!-- 页码 -->
+                                    {% if total_pages > 0 %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">{{ page }}/{{ total_pages }}</a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                                        <a class="page-link" href="?page={{ page + 1 }}{% if username_filter %}&username={{ username_filter }}{% endif %}{% if email_filter %}&email={{ email_filter }}{% endif %}{% if status_filter != "" %}&status={{ status_filter }}{% endif %}{% if vip_level_filter != "" %}&vip_level={{ vip_level_filter }}{% endif %}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -24,7 +24,7 @@ pub fn init_logger() -> Result<(), fern::InitError> {
         // 输出到控制台
         .chain(std::io::stdout())
         // 日志级别
-        .level(log::LevelFilter::Info)
+        .level(log::LevelFilter::Debug)
         // 特定模块的日志级别
         .level_for("actix_web", log::LevelFilter::Warn)
         .level_for("diesel", log::LevelFilter::Warn)
@@ -34,18 +34,4 @@ pub fn init_logger() -> Result<(), fern::InitError> {
     Ok(())
 }
 
-pub fn info_log(message: &str) {
-    info!("{}", message);
-}
 
-pub fn warn_log(message: &str) {
-    warn!("{}", message);
-}
-
-pub fn error_log(message: &str) {
-    error!("{}", message);
-}
-
-pub fn debug_log(message: &str) {
-    debug!("{}", message);
-}

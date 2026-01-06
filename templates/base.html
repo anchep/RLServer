@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}后台管理系统{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 自定义样式 -->
+    <link href="/static/css/admin.css" rel="stylesheet">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    {% if is_authenticated %}
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2 id="sidebar-title">后台管理</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="/admin/dashboard/" class="nav-link"><span>仪表板</span></a></li>
+                <li>
+                    <a href="#software-submenu" class="nav-link dropdown-toggle" data-bs-toggle="collapse"><span>软件管理</span></a>
+                    <ul class="collapse" id="software-submenu">
+                        <li><a href="/admin/dashboard/software/" class="nav-link"><span>软件列表</span></a></li>
+                        <li><a href="/admin/dashboard/software/add" class="nav-link"><span>添加软件</span></a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#cards-submenu" class="nav-link dropdown-toggle" data-bs-toggle="collapse"><span>卡密管理</span></a>
+                    <ul class="collapse" id="cards-submenu">
+                        <li><a href="/admin/dashboard/cards/" class="nav-link"><span>卡密列表</span></a></li>
+                        <li><a href="/admin/dashboard/cards/generate" class="nav-link"><span>生成卡密</span></a></li>
+                        <li><a href="/admin/dashboard/cards/history" class="nav-link"><span>充值历史</span></a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#users-submenu" class="nav-link dropdown-toggle" data-bs-toggle="collapse"><span>用户管理</span></a>
+                    <ul class="collapse" id="users-submenu">
+                        <li><a href="/admin/dashboard/users/" class="nav-link"><span>用户列表</span></a></li>
+                        <li><a href="/admin/dashboard/users/blacklist" class="nav-link"><span>黑名单管理</span></a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#stats-submenu" class="nav-link dropdown-toggle" data-bs-toggle="collapse"><span>统计分析</span></a>
+                    <ul class="collapse" id="stats-submenu">
+                        <li><a href="/admin/dashboard/stats/overview" class="nav-link"><span>综合统计</span></a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#account-submenu" class="nav-link dropdown-toggle" data-bs-toggle="collapse"><span>账号管理</span></a>
+                    <ul class="collapse" id="account-submenu">
+                        <li><a href="/admin/dashboard/profile" class="nav-link"><span>个人中心</span></a></li>
+                        <li><a href="/admin/dashboard/logs" class="nav-link"><span>操作日志</span></a></li>
+                    </ul>
+                </li>
+                <li><a href="/admin/logout" class="nav-link logout-link"><span>退出登录</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+    {% endif %}
+    
+    <!-- 主内容区域 -->
+    <main class="main-content">
+        {% if is_authenticated %}
+        <!-- 顶部导航栏 -->
+        <header class="top-nav">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="h3">{% block page_title %}仪表板{% endblock %}</h1>
+                    <div class="user-info">
+                        <span>欢迎, {{ username }}</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+        {% endif %}
+        
+        <!-- 内容区域 -->
+        <div class="content">
+            
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    
+    <!-- Bootstrap JS -->
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <!-- 自定义脚本 -->
+    <script src="/static/js/admin.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
